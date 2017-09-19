@@ -1,0 +1,30 @@
+{
+    "name": "swayok/peskyorm-laravel",
+    "type": "library",
+    "description": "Service Providers and other classes to replace laravel's Eloquent ORM by PeskyORM",
+    "keywords": [
+        "php",
+        "laravel",
+        "service provider"
+    ],
+    "authors": [
+        {
+            "name": "Alexander Filippov"
+        }
+    ],
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/swayok/peskyorm-laravel/issues"
+    },
+    "autoload": {
+        "psr-0": {
+            "PeskyORMLaravel": "/src"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.6",
+        "laravel/framework": "^5.2",
+        "swayok/peskyorm": "v2.x-dev"
+    }
+}

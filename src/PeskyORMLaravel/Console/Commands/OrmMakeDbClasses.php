@@ -135,7 +135,7 @@ class OrmMakeDbClasses extends Command {
     protected function buildNamespaceForClasses($tableName) {
         /** @var ClassBuilder $builderClass */
         $builderClass = $this->getClassBuilderClass();
-        return config('peskyorm.classes_namespace', '\\App\\Db\\') . $builderClass::convertTableNameToClassName($tableName);
+        return trim(config('peskyorm.classes_namespace', 'App\\Db'), ' \\') . '\\' . $builderClass::convertTableNameToClassName($tableName);
     }
 
     protected function getFolder($tableName, $namespace) {

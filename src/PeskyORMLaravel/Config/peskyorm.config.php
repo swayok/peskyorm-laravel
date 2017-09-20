@@ -31,6 +31,14 @@ return [
      * Traits with DB table columns declarations to use instead of declaring that columns
      * Used by OrmMakeDbClasses command (passed to class_builder during table structure class generation)
      */
-    'table_structure_traits' => []
+    'table_structure_traits' => [
+        \PeskyORMLaravel\TableStructureTraits\IdColumn::class,              // id
+        \PeskyORMLaravel\TableStructureTraits\IsActiveColumn::class,        // is_active
+        \PeskyORMLaravel\TableStructureTraits\IsPublishedColumn::class,     // is_published
+        \PeskyORMLaravel\TableStructureTraits\UserAuthColumns::class,       // password and remember_token
+        \PeskyORMLaravel\TableStructureTraits\PasswordColumn::class,        // password
+        \PeskyORMLaravel\TableStructureTraits\TimestampColumns::class,      // created_at and updated_at
+        \PeskyORMLaravel\TableStructureTraits\CreatedAtColumn::class,       // created_at
+    ]
 
 ];

@@ -1,6 +1,6 @@
 <?php
 
-namespace PeskyORMLaravel\TableStructureTraits;
+namespace PeskyORMLaravel\Db\TableStructureTraits;
 
 use PeskyORM\Core\DbExpr;
 use PeskyORM\ORM\Column;

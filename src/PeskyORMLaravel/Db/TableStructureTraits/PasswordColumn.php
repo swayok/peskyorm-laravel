@@ -1,6 +1,6 @@
 <?php
 
-namespace PeskyORMLaravel\TableStructureTraits;
+namespace PeskyORMLaravel\Db\TableStructureTraits;
 
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\DefaultColumnClosures;

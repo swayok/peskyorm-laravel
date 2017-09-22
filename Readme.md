@@ -29,10 +29,11 @@ This will add `config/peskyorm.php` file
 
 ## Notes
 
-1. You may remove `'Eloquent' => Illuminate\Database\Eloquent\Model::class` form `helpers` array in `config/app.php` if you're not going to use it along with PeskyORM
-2. You may also remove `Illuminate\Pagination\PaginationServiceProvider::class` and `Illuminate\Auth\Passwords\PasswordResetServiceProvider::class` form `providers` (don't forget to remove `'Password' => Illuminate\Support\Facades\Password::class` helper) because PeskyORM does not support these currently.
-3. Do not remove Laravel's `DatabaseServiceProvider` - some parts of Laravel use it to do service things like migrations, db seeding, etc.
-4. Do not remove `DB` helper - it may be useful and it won't harm your app's perfomance or stability
+1. Remove `Illuminate\Validation\ValidationServiceProvider::class` from `providers` array in `config/app.php` - `\PeskyORMLaravel\Providers\PeskyValidationServiceProvider::class` replaces it
+2. You may remove `'Eloquent' => Illuminate\Database\Eloquent\Model::class` form `helpers` array in `config/app.php` if you're not going to use it along with PeskyORM
+3. You may also remove `Illuminate\Pagination\PaginationServiceProvider::class` and `Illuminate\Auth\Passwords\PasswordResetServiceProvider::class` form `providers` (don't forget to remove `'Password' => Illuminate\Support\Facades\Password::class` helper) because PeskyORM does not support these currently.
+4. Do not remove Laravel's `DatabaseServiceProvider` - some parts of Laravel use it to do service things like migrations, db seeding, etc.
+5. Do not remove `DB` helper - it may be useful and it won't harm your app's perfomance or stability
 
 ## Todo
 1. Update tests and cover more functionality

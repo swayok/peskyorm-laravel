@@ -1,6 +1,6 @@
 <?php
 
-namespace PeskyORMLaravel\Db;
+namespace PeskyORMLaravel\Db\KeyValueTableUtils;
 
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\FakeTable;

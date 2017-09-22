@@ -1,7 +1,7 @@
 <?php
 
 
-namespace PeskyORMLaravel\Db;
+namespace PeskyORMLaravel\Db\KeyValueTableUtils;
 
 use PeskyORM\Core\DbExpr;
 use PeskyORM\ORM\Column;

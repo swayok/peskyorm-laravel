@@ -6,7 +6,7 @@ use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
 use PeskyORMLaravel\Db\Column\Utils\FileConfig;
 use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
-use PeskyORMLaravel\Db\KeyValueTableInterface;
+use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
 
 class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 

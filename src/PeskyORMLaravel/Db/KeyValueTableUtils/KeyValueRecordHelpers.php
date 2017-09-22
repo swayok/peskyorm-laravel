@@ -1,7 +1,7 @@
 <?php
 
 
-namespace PeskyORMLaravel\Db;
+namespace PeskyORMLaravel\Db\KeyValueTableUtils;
 
 /**
  * @method static KeyValueTableInterface getTable()

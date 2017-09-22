@@ -64,7 +64,7 @@ class FileConfig {
         self::DOC => 'doc',
         self::DOCX => 'docx',
         self::XLS => 'xls',
-        self::XLSX=> 'xlsx',
+        self::XLSX => 'xlsx',
     ];
 
     /**

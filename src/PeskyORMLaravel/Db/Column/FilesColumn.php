@@ -65,6 +65,9 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
             ->setDefaultValue('{}');
     }
 
+    /**
+     * @return bool
+     */
     public function isItAFile() {
         return true;
     }
@@ -75,7 +78,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @return $this
      */
     public function setRelativeUploadsFolderPath($folder) {
-        $this->relativeUploadsFolderPath = $folder;
+        $this->relativeUploadsFolderPath = static::normalizeFolderPath($folder);
         return $this;
     }
 
@@ -110,14 +113,6 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
     }
 
     /**
-     * @param string $path
-     * @return string
-     */
-    static protected function normalizeFolderPath($path) {
-        return preg_replace('%[/\\\]+%', DIRECTORY_SEPARATOR, rtrim($path, ' /\\')) . DIRECTORY_SEPARATOR;
-    }
-
-    /**
      * @param RecordInterface $record
      * @param FileConfig $fileConfig
      * @return string
@@ -133,6 +128,14 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      */
     public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig) {
         return static::normalizeFolderUrl($this->getRelativeUploadsFolderPath($record, $fileConfig));
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    static protected function normalizeFolderPath($path) {
+        return preg_replace('%[/\\\]+%', DIRECTORY_SEPARATOR, rtrim($path, ' /\\')) . DIRECTORY_SEPARATOR;
     }
 
     /**

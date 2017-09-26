@@ -27,12 +27,5 @@
         "php": ">=5.6",
         "laravel/framework": "^5.2",
         "swayok/peskyorm": "v2.x-dev"
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "PeskyORMLaravel\\Providers\\PeskyOrmServiceProvider"
-            ]
-        }
     }
 }

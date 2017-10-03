@@ -23,7 +23,7 @@ class PeskyOrmUserProvider implements UserProvider {
      * @throws \InvalidArgumentException
      */
     public function __construct($dbRecordClass) {
-        if (empty($dbRecordClass) && class_exists($dbRecordClass)) {
+        if (empty($dbRecordClass) || !class_exists($dbRecordClass)) {
             throw new \InvalidArgumentException(
                 'Argument $dbRecordClass must contin a class name that implements PeskyORM\ORM\RecordInterface'
             );

@@ -95,7 +95,7 @@ class KeyValueDataSaver extends Record {
         parent::saveToDb($columnsToSave);
     }
 
-    protected function collectValuesForSave(array $columnsToSave, $isUpdate) {
+    protected function collectValuesForSave(array &$columnsToSave, $isUpdate) {
         $data = [];
         foreach ($columnsToSave as $columnName) {
             $column = static::getColumn($columnName);

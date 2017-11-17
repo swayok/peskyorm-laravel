@@ -166,6 +166,7 @@ class FileConfig {
         if (count($allowedFileTypes) === 1 && isset($allowedFileTypes[0]) && is_array($allowedFileTypes[0])) {
             $allowedFileTypes = $allowedFileTypes[0];
         }
+        $this->allowedFileTypesAliases = [];
         /** @var array $allowedFileTypes */
         foreach ($allowedFileTypes as $fileType) {
             if (!empty($this->fileTypeAliases[$fileType])) {

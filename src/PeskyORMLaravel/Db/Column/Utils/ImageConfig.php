@@ -4,18 +4,6 @@ namespace PeskyORMLaravel\Db\Column\Utils;
 
 class ImageConfig extends FileConfig {
 
-    const PNG = 'image/png';
-    const JPEG = 'image/jpeg';
-    const GIF = 'image/gif';
-    const SVG = 'image/svg';
-
-    protected $typeToExt = [
-        self::PNG => 'png',
-        self::JPEG => 'jpg',
-        self::GIF => 'gif',
-        self::SVG => 'svg',
-    ];
-
     /** @var int */
     protected $maxWidth = 1920;
     /** @var float */
@@ -24,25 +12,11 @@ class ImageConfig extends FileConfig {
     /**
      * @var array
      */
-    protected $allowedFileTypes = [
+    protected $defaultAllowedFileTypes = [
         self::PNG,
         self::JPEG,
         self::SVG,
         self::GIF,
-    ];
-
-    /**
-     * List of aliases for file types
-     * For example: image/jpeg has alias image/x-jpeg
-     * @var array
-     */
-    protected $fileTypeAliases = [
-        self::JPEG => [
-            'image/x-jpeg'
-        ],
-        self::PNG => [
-            'image/x-png'
-        ]
     ];
 
     /**

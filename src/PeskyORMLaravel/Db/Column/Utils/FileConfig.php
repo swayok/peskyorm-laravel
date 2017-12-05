@@ -8,10 +8,38 @@ class FileConfig {
 
     const TXT = 'text/plain';
     const PDF = 'application/pdf';
+    const RTF = 'application/rtf';
     const DOC = 'application/msword';
     const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     const XLS = 'application/ms-excel';
     const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const CSV = 'text/csv';
+    const PNG = 'image/png';
+    const JPEG = 'image/jpeg';
+    const GIF = 'image/gif';
+    const SVG = 'image/svg';
+    const MP4_VIDEO = 'video/mp4';
+    const MP4_AUDIO = 'audio/mp4';
+
+    /**
+     * @var array
+     */
+    protected $typeToExt = [
+        self::TXT => 'txt',
+        self::PDF => 'pdf',
+        self::RTF => 'rtf',
+        self::DOC => 'doc',
+        self::DOCX => 'docx',
+        self::XLS => 'xls',
+        self::XLSX => 'xlsx',
+        self::PNG => 'png',
+        self::JPEG => 'jpg',
+        self::GIF => 'gif',
+        self::SVG => 'svg',
+        self::MP4_VIDEO => 'mp4',
+        self::MP4_AUDIO => 'mp3',
+        self::CSV => 'csv',
+    ];
 
     /** @var string */
     protected $name;
@@ -31,9 +59,14 @@ class FileConfig {
     /**
      * @var array
      */
-    protected $allowedFileTypes = [
+    protected $allowedFileTypes = [];
+    /**
+     * @var array
+     */
+    protected $defaultAllowedFileTypes = [
         self::TXT,
         self::PDF,
+        self::RTF,
         self::DOC,
         self::DOCX,
         self::XLS,
@@ -52,19 +85,22 @@ class FileConfig {
      * @var array
      */
     protected $fileTypeAliases = [
-
-    ];
-
-    /**
-     * @var array
-     */
-    protected $typeToExt = [
-        self::TXT => 'txt',
-        self::PDF => 'pdf',
-        self::DOC => 'doc',
-        self::DOCX => 'docx',
-        self::XLS => 'xls',
-        self::XLSX => 'xlsx',
+        self::JPEG => [
+            'image/x-jpeg'
+        ],
+        self::PNG => [
+            'image/x-png'
+        ],
+        self::RTF => [
+            'application/x-rtf',
+            'text/richtext'
+        ],
+        self::XLS => [
+            'application/excel',
+            'application/vnd.ms-excel',
+            'application/x-excel',
+            'application/x-msexcel',
+        ]
     ];
 
     /**
@@ -74,6 +110,7 @@ class FileConfig {
 
     public function __construct($name) {
         $this->name = $name;
+        $this->setAllowedFileTypes($this->defaultAllowedFileTypes);
     }
 
     /**
@@ -143,18 +180,18 @@ class FileConfig {
     }
 
     /**
-     * @param bool $withoutAliases
+     * @param bool $withAliases
      * @return array
      */
-    public function getAllowedFileTypes($withoutAliases = false) {
-        return $withoutAliases ? array_diff($this->allowedFileTypes, $this->allowedFileTypesAliases) : $this->allowedFileTypes;
+    public function getAllowedFileTypes($withAliases = true) {
+        return $withAliases ? $this->allowedFileTypes : array_diff($this->allowedFileTypes, $this->allowedFileTypesAliases);
     }
 
     /**
      * @return array
      */
     public function getAllowedFileExtensions() {
-        return array_values(array_intersect_key($this->typeToExt, array_flip($this->allowedFileTypes)));
+        return array_values(array_intersect_key($this->typeToExt, array_flip($this->getAllowedFileTypes(false))));
     }
 
     /**
@@ -256,7 +293,7 @@ class FileConfig {
             'max_files_count' => $this->getMaxFilesCount(),
             'max_file_size' => $this->getMaxFileSize(),
             'allowed_extensions' => $this->getAllowedFileExtensions(),
-            'allowed_mime_types' => $this->getAllowedFileTypes(true),
+            'allowed_mime_types' => $this->getAllowedFileTypes(),
         ];
     }
 }

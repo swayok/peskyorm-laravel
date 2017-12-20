@@ -58,6 +58,9 @@ class ImageConfig extends FileConfig {
      * @throws \InvalidArgumentException
      */
     public function setAllowedFileTypes(...$allowedFileTypes) {
+        if (count($allowedFileTypes) === 1 && isset($allowedFileTypes[0]) && is_array($allowedFileTypes[0])) {
+            $allowedFileTypes = $allowedFileTypes[0];
+        }
         parent::setAllowedFileTypes($allowedFileTypes);
         $unknownTypes = array_diff(
             $this->allowedFileTypes,

@@ -2,13 +2,13 @@
 
 namespace PeskyORMLaravel\Db\Column\Utils;
 
-use Illuminate\Http\UploadedFile;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\DefaultColumnClosures;
 use PeskyORM\ORM\RecordValue;
 use PeskyORM\ORM\RecordValueHelpers;
 use PeskyORMLaravel\Db\Column\ImagesColumn;
 use Swayok\Utils\ValidateValue;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ImagesUploadingColumnClosures extends DefaultColumnClosures{
 
@@ -96,6 +96,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param bool $isFromDb
      * @param Column|ImagesColumn $column
      * @return array
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static public function valueNormalizer($value, $isFromDb, Column $column) {
         if ($isFromDb && !is_array($value)) {
@@ -140,7 +141,22 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                             && !(bool)array_get($fileUploadInfo, 'deleted', false)
                         )
                     ) {
-                        continue;
+                        if (!empty($fileUploadInfo['file_data'])) {
+                            $base64FileInfo = json_decode($fileUploadInfo['file_data'], true);
+                            if (is_array($base64FileInfo) && array_has($base64FileInfo, ['data', 'name', 'extension'])) {
+                                $fileUploadInfo = [
+                                    'file' => new Base64UploadedFile(
+                                        $base64FileInfo['data'],
+                                        $base64FileInfo['name'],
+                                        $base64FileInfo['extension']
+                                    )
+                                ];
+                            } else {
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
                     } else {
                         $fileUploadInfo['deleted'] = (bool)array_get($fileUploadInfo, 'deleted', false);
                     }

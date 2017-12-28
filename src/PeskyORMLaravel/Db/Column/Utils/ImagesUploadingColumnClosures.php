@@ -19,7 +19,6 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param RecordValue $valueContainer
      * @param bool $trustDataReceivedFromDb
      * @return RecordValue
-     * @throws \PeskyORM\Exception\OrmException
      * @throws \PDOException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException
@@ -147,8 +146,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                                 $fileUploadInfo = [
                                     'file' => new Base64UploadedFile(
                                         $base64FileInfo['data'],
-                                        $base64FileInfo['name'],
-                                        $base64FileInfo['extension']
+                                        rtrim($base64FileInfo['name'] . '.' . $base64FileInfo['extension'], '.')
                                     )
                                 ];
                             } else {

@@ -38,19 +38,20 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
         $normaizledValue = static::valueNormalizer($newValue, $isFromDb, $column);
         if (count($normaizledValue)) {
             $newFiles = [];
-            $infoArrays = [];
+            $deleteFiles = [];
+            $uuidsOfFilesToDelete = [];
+            $knownUuids = [];
             foreach ($normaizledValue as $imageName => $images) {
-                foreach ($images as $idx => $imageInfo) {
+                foreach ($images as $imageInfo) {
                     if (array_key_exists('file', $imageInfo)) {
-                        if (!array_key_exists($imageName, $newFiles)) {
-                            $newFiles[$imageName] = [];
+                        $imageInfo['delete'] = 1;
+                        $newFiles[$imageName][] = $imageInfo;
+                    }
+                    if (!empty($imageInfo['uuid'])) {
+                        $knownUuids[$imageName][] = $imageInfo['uuid'];
+                        if (array_get($imageInfo, 'delete', false)) {
+                            $uuidsOfFilesToDelete[$imageName][] = $imageInfo['uuid'];
                         }
-                        $newFiles[$imageName][$idx] = $imageInfo;
-                    } else {
-                        if (!array_key_exists($imageName, $infoArrays)) {
-                            $infoArrays[$imageName] = [];
-                        }
-                        $infoArrays[$imageName][$idx] = $imageInfo;
                     }
                 }
             }
@@ -63,7 +64,8 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                 }
                 if (is_array($oldValue)) {
                     $oldValue = static::valueNormalizer($oldValue, false, $column);
-                    foreach ($infoArrays as $imageName => $images) {
+//                    foreach ($oldValue as )
+                    foreach ($uuidsOfFilesToDelete as $imageName => $images) {
                         if (empty($oldValue[$imageName])) {
                             $oldValue[$imageName] = $images;
                         } else {
@@ -76,11 +78,11 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                             }
                         }
                     }
-                    $infoArrays = $oldValue;
+                    $uuidsOfFilesToDelete = $oldValue;
                 }
             }
-            $json = json_encode($infoArrays, JSON_UNESCAPED_UNICODE);
-            $valueContainer->setRawValue($infoArrays, $json, false)->setValidValue($json, $infoArrays);
+            $json = json_encode($uuidsOfFilesToDelete, JSON_UNESCAPED_UNICODE);
+            $valueContainer->setRawValue($uuidsOfFilesToDelete, $json, false)->setValidValue($json, $uuidsOfFilesToDelete);
             if (!empty($newFiles)) {
                 $valueContainer->setDataForSavingExtender($newFiles);
             }
@@ -132,7 +134,6 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                 foreach ($value[$imageName] as $idx => $fileUploadInfo) {
                     if (static::isFileInfoArray($fileUploadInfo)) {
                         unset($fileUploadInfo['deleted']);
-                        $normailzedData[$idx] = $fileUploadInfo;
                     } else if (
                         !is_int($idx)
                         || (
@@ -158,7 +159,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                     } else {
                         $fileUploadInfo['deleted'] = (bool)array_get($fileUploadInfo, 'deleted', false);
                     }
-                    $normailzedData[$idx] = $fileUploadInfo;
+                    $normailzedData[] = $fileUploadInfo;
                 }
                 $value[$imageName] = $normailzedData;
             }
@@ -207,7 +208,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                 if (
                     !$isUploadedImage
                     && !array_get($fileUploadOrFileInfo, 'deleted', false)
-                    && empty($fileUploadOrFileInfo['old_file'])
+                    && empty($fileUploadOrFileInfo['uuid'])
                 ) {
                     if (!array_key_exists($imageName . '.' . $idx, $errors)) {
                         $errors[$imageName . '.' . $idx] = [];
@@ -297,14 +298,11 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                 }
                 $filesSaved = 0;
                 foreach ($fileUploads as $idx => $uploadInfo) {
-                    if (
-                        array_has($uploadInfo, 'old_file')
-                        && is_array($oldFile = json_decode($uploadInfo['old_file'], true))
-                        && static::isFileInfoArray($oldFile)
-                    ) {
-                        $existingFileInfo = FileInfo::fromArray($oldFile, $imageConfig, $valueContainer->getRecord());
-                        \File::delete($existingFileInfo->getAbsoluteFilePath());
-                        \File::cleanDirectory($existingFileInfo->getAbsolutePathToModifiedImagesFolder());
+                    if (array_has($uploadInfo, 'uuid')) {
+                        // todo: refactor this to use uuid to get old file info and delete it or rewrite this totally to use separate array
+//                        $existingFileInfo = FileInfo::fromArray($oldFile, $imageConfig, $valueContainer->getRecord());
+//                        \File::delete($existingFileInfo->getAbsoluteFilePath());
+//                        \File::cleanDirectory($existingFileInfo->getAbsolutePathToModifiedImagesFolder());
                     }
                     $file = array_get($uploadInfo, 'file', false);
                     if (!empty($file)) {
@@ -401,9 +399,9 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                                 }
                             }
                         }
-                        for ($i = count($ret); $i < $imageConfig->getMaxFilesCount(); $i++) {
+                        /*for ($i = count($ret); $i < $imageConfig->getMaxFilesCount(); $i++) {
                             $ret[] = NoFileInfo::create();
-                        }
+                        }*/
                     }
                     return $ret;
                 },

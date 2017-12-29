@@ -347,7 +347,8 @@ trait KeyValueTableHelpers {
         if (!empty($data)) {
             // modify values so that they are processed by custom columns defined in table structure + set defaults
             $columns = $table->getTableStructure()->getColumns();
-            $record = $table->newRecord()->updateValues($data, false, false);
+            $data[$table::getPkColumnName()] = 0;
+            $record = $table->newRecord()->updateValues($data, true, false);
             /** @var Column $column */
             foreach ($columns as $columnName => $column) {
                 if (!$column->isItExistsInDb()) {

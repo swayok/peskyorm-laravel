@@ -3,6 +3,7 @@
 namespace PeskyORMLaravel\Db\Column\Utils;
 
 use PeskyORM\ORM\RecordInterface;
+use Ramsey\Uuid\Uuid;
 use Swayok\Utils\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -20,6 +21,10 @@ class FileInfo {
     protected $fileSuffix;
     /** @var string */
     protected $fileExtension;
+    /** @var string */
+    protected $uuid;
+    /** @var string */
+    protected $uuidFoDb;
     /** @var array */
     protected $customInfo = [];
 
@@ -31,12 +36,15 @@ class FileInfo {
      */
     static public function fromArray(array $fileInfo, FileConfig $fileConfig, RecordInterface $record) {
         /** @var FileInfo $obj */
-        $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix', null));
+        $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix'));
         $obj
-            ->setFileName(array_get($fileInfo, 'name', null))
-            ->setOriginalFileName(array_get($fileInfo, 'original_name', null))
-            ->setFileExtension(array_get($fileInfo, 'extension', null))
-            ->setCustomInfo(array_get($fileInfo, 'info', null));
+            ->setFileName(array_get($fileInfo, 'name'))
+            ->setOriginalFileName(array_get($fileInfo, 'original_name'))
+            ->setFileExtension(array_get($fileInfo, 'extension'))
+            ->setCustomInfo(array_get($fileInfo, 'info'))
+            ->setUuid(array_get($fileInfo, 'uuid', function () use ($obj) {
+                return $obj->makeTempUuid();
+            }));
         return $obj;
     }
 
@@ -56,8 +64,10 @@ class FileInfo {
             $extension = $fileInfo->getExtension();
             $fileName = $fileInfo->getFilename();
         }
-        $obj->setFileExtension($extension);
-        $obj->setOriginalFileName(preg_replace("%\.{$extension}$%", '', $fileName));
+        $obj
+            ->setFileExtension($extension)
+            ->setOriginalFileName(preg_replace("%\.{$extension}$%", '', $fileName))
+            ->setUuid($obj->makeUuid());
         return $obj;
     }
 
@@ -70,6 +80,56 @@ class FileInfo {
         $this->fileConfig = $fileConfig;
         $this->record = $record;
         $this->fileSuffix = $fileSuffix;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUuid() {
+        return $this->uuid;
+    }
+
+    /**
+     * Get UUID to be saved to DB
+     * Unlike getUuid() this method will never return 'temporary UUID' for cases when UUID was not provided
+     * during object creation via static::fromArray() method
+     * @return string
+     */
+    protected function getUuidForDb() {
+        if (empty($this->uuidFoDb)) {
+            $this->uuidFoDb = $this->isTempUuid() ? $this->makeUuid() : $this->getUuid();
+        }
+        return $this->uuidFoDb;
+    }
+
+    /**
+     * @return string
+     */
+    protected function makeUuid() {
+        return Uuid::uuid4()->getHex();
+    }
+
+    /**
+     * @return string
+     */
+    protected function makeTempUuid() {
+        return 'hash:' . sha1($this->getAbsoluteFilePath() . $this->getOriginalFileNameWithExtension());
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isTempUuid() {
+        return stripos($this->getUuid(), 'hash:') === 0;
+    }
+
+    /**
+     * @param string $uuid
+     * @return $this
+     */
+    protected function setUuid($uuid) {
+        $this->uuid = $uuid;
+        return $this;
     }
 
     /**
@@ -255,7 +315,8 @@ class FileInfo {
             'name' => $this->getFileName(), //< file name with suffix but without extension
             'extension' => $this->getFileExtension(),
             'suffix' => $this->getFileSuffix(),
-            'info' => $this->getCustomInfo()
+            'info' => $this->getCustomInfo(),
+            'uuid' => $this->getUuidForDb()
         ];
     }
 

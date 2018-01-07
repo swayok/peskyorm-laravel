@@ -55,38 +55,49 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                     }
                 }
             }
-            $valueContainer->setIsFromDb(false);
-            if ($valueContainer->hasValue()) {
-                // merge configs
-                $oldValue = $valueContainer->getValue();
-                if (!is_array($oldValue)) {
-                    $oldValue = json_decode($oldValue, true);
-                }
-                if (is_array($oldValue)) {
+
+            $oldValue = $valueContainer->getValue();
+            if (!is_array($oldValue)) {
+                $oldValue = json_decode($oldValue, true);
+                if (is_array($oldValue) && !empty($oldValue)) {
                     $oldValue = static::valueNormalizer($oldValue, false, $column);
-//                    foreach ($oldValue as )
-                    foreach ($uuidsOfFilesToDelete as $imageName => $images) {
-                        if (empty($oldValue[$imageName])) {
-                            $oldValue[$imageName] = $images;
+                } else {
+                    $oldValue = [];
+                }
+            }
+
+            $valueContainer->setIsFromDb(false);
+            if (!empty($oldValue)) {
+                foreach ($oldValue as $imageName => $images) {
+                    foreach ($images as $index => $image) {
+                        if (!empty($image['uuid'])) {
+                            $uuid = $image['uuid'];
                         } else {
-                            foreach ($images as $index => $image) {
-                                $oldValue[$imageName][$index] = $image;
-                            }
-                            if (empty($newFiles)) {
-                                // normalize indexes safely
-                                $oldValue[$imageName] = array_values($oldValue[$imageName]);
-                            }
+                            $imageConfig = $column->getImageConfiguration($imageName);
+                            $uuid = FileInfo::fromArray(
+                                    $image,
+                                    $imageConfig,
+                                    $valueContainer->getRecord()
+                                )->getUuid();
+                        }
+                        if (in_array($uuid, $uuidsOfFilesToDelete, true)) {
+                            $deleteFiles[$imageName] = $image;
+                            unset($oldValue[$imageName][$index]);
                         }
                     }
-                    $uuidsOfFilesToDelete = $oldValue;
                 }
             }
-            $json = json_encode($uuidsOfFilesToDelete, JSON_UNESCAPED_UNICODE);
-            $valueContainer->setRawValue($uuidsOfFilesToDelete, $json, false)->setValidValue($json, $uuidsOfFilesToDelete);
-            if (!empty($newFiles)) {
-                $valueContainer->setDataForSavingExtender($newFiles);
+            $json = json_encode($oldValue, JSON_UNESCAPED_UNICODE);
+            $valueContainer
+                ->setRawValue($oldValue, $json, false)
+                ->setValidValue($json, $oldValue);
+            if (!empty($newFiles) || !empty($deleteFiles)) {
+                $valueContainer->setDataForSavingExtender(['new' => $newFiles, 'delete' => $deleteFiles]);
             }
         } else {
+            if ($valueContainer->hasValue()) {
+                $valueContainer->setDataForSavingExtender(['new' => [], 'delete' => $valueContainer->getValue()]);
+            }
             $valueContainer->setRawValue('{}', '{}', false)->setValidValue('{}', '{}');
         }
         return $valueContainer;
@@ -283,12 +294,25 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      */
     static public function valueSavingExtender(RecordValue $valueContainer, $isUpdate, array $savedData) {
         /** @var array $newFiles */
-        $newFiles = $valueContainer->pullDataForSavingExtender();
+        $updates = $valueContainer->pullDataForSavingExtender();
+
         /** @var ImagesColumn $column */
         $column = $valueContainer->getColumn();
+        $record = $valueContainer->getRecord();
+        $deletedFiles = (array)array_get($updates, 'delete', []);
+        foreach ($deletedFiles as $imageName => $files) {
+            $imageConfig = $column->getImageConfiguration($imageName);
+            foreach ($files as $fileInfo) {
+                $existingFileInfo = FileInfo::fromArray($fileInfo, $imageConfig, $record);
+                \File::delete($existingFileInfo->getAbsoluteFilePath());
+                \File::cleanDirectory($existingFileInfo->getAbsolutePathToModifiedImagesFolder());
+            }
+        }
+
+        $newFiles = (array)array_get($updates, 'new', []);
         $baseSuffix = time();
         if (!empty($newFiles)) {
-            $value = $valueContainer->getRecord()->getValue($valueContainer->getColumn()->getName(), 'array');
+            $newValue = json_decode($valueContainer->getValue(), true) ?: [];
             /** @var array $fileUploads */
             foreach ($newFiles as $imageName => $fileUploads) {
                 $imageConfig = $column->getImageConfiguration($imageName);
@@ -297,13 +321,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                     \File::cleanDirectory($dir);
                 }
                 $filesSaved = 0;
-                foreach ($fileUploads as $idx => $uploadInfo) {
-                    if (array_has($uploadInfo, 'uuid')) {
-                        // todo: refactor this to use uuid to get old file info and delete it or rewrite this totally to use separate array
-//                        $existingFileInfo = FileInfo::fromArray($oldFile, $imageConfig, $valueContainer->getRecord());
-//                        \File::delete($existingFileInfo->getAbsoluteFilePath());
-//                        \File::cleanDirectory($existingFileInfo->getAbsolutePathToModifiedImagesFolder());
-                    }
+                foreach ($fileUploads as $uploadInfo) {
                     $file = array_get($uploadInfo, 'file', false);
                     if (!empty($file)) {
                         $fileInfo = FileInfo::fromSplFileInfo($file, $imageConfig, $valueContainer->getRecord(), $baseSuffix + $filesSaved);
@@ -326,21 +344,21 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                         }
                         // update value
                         $fileInfo->setCustomInfo(array_get($uploadInfo, 'info', []));
-                        $value[$imageName][$idx] = $fileInfo->collectImageInfoForDb();
-                    } else {
-                        unset($value[$imageName][$idx]);
+                        $newValue[$imageName][] = $fileInfo->collectImageInfoForDb();
                     }
                 }
-                if (empty($value[$imageName])) {
+                if (empty($newValue[$imageName])) {
                     \File::cleanDirectory($dir);
-                    unset($value[$imageName]);
+                    unset($newValue[$imageName]);
+                } else {
+                    // todo reorder here or not?
                 }
+                $valueContainer->getRecord()
+                    ->unsetValue($valueContainer->getColumn()) //< to avoid merging
+                    ->begin()
+                    ->updateValue($valueContainer->getColumn(), $newValue, false)
+                    ->commit();
             }
-            $valueContainer->getRecord()
-                ->unsetValue($valueContainer->getColumn()) //< to avoid merging
-                ->begin()
-                ->updateValue($valueContainer->getColumn(), $value, false)
-                ->commit();
         }
     }
 
@@ -373,7 +391,6 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param RecordValue $valueContainer
      * @param string $format
      * @return mixed
-     * @throws \PeskyORM\Exception\OrmException
      * @throws \BadMethodCallException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException

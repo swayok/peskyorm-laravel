@@ -363,7 +363,7 @@ trait KeyValueTableHelpers {
                         // has processed value or default value
                         $data[$columnName] = $record->getValue($column, $isJson ? 'array' : null);
                     }
-                    if ($ignoreEmptyValues && static::isEmptyValue($data[$columnName])) {
+                    if ($ignoreEmptyValues && static::isEmptyValue(array_get($data, $columnName))) {
                         unset($data[$columnName]);
                     }
                 }

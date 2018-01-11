@@ -27,6 +27,10 @@ class FileInfo {
     protected $uuidFoDb;
     /** @var array */
     protected $customInfo = [];
+    /** @var null|int */
+    protected $position;
+    /** @var int */
+    static private $autoPositioningCounter = 1;
 
     /**
      * @param array $fileInfo
@@ -45,6 +49,9 @@ class FileInfo {
             ->setUuid(array_get($fileInfo, 'uuid', function () use ($obj) {
                 return $obj->makeTempUuid();
             }));
+        if (array_has($fileInfo, 'position')) {
+            $obj->setPosition($fileInfo['position']);
+        }
         return $obj;
     }
 
@@ -230,6 +237,26 @@ class FileInfo {
     }
 
     /**
+     * @param int $position
+     * @return $this
+     */
+    public function setPosition($position) {
+        $this->position = (int)$position;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPosition() {
+        if ($this->position === null) {
+            $this->position = time() + static::$autoPositioningCounter;
+            static::$autoPositioningCounter++;
+        }
+        return $this->position;
+    }
+
+    /**
      * @param string|array $customInfo
      * @return $this
      */
@@ -316,7 +343,8 @@ class FileInfo {
             'extension' => $this->getFileExtension(),
             'suffix' => $this->getFileSuffix(),
             'info' => $this->getCustomInfo(),
-            'uuid' => $this->getUuidForDb()
+            'uuid' => $this->getUuidForDb(),
+            'position' => $this->getPosition()
         ];
     }
 

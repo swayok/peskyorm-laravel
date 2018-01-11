@@ -4,6 +4,7 @@ namespace PeskyORMLaravel\Db\Column\Utils;
 
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\DefaultColumnClosures;
+use PeskyORM\ORM\RecordInterface;
 use PeskyORM\ORM\RecordValue;
 use PeskyORM\ORM\RecordValueHelpers;
 use PeskyORMLaravel\Db\Column\ImagesColumn;
@@ -19,7 +20,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param RecordValue $valueContainer
      * @param bool $trustDataReceivedFromDb
      * @return RecordValue
-     * @throws \PDOException
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
@@ -36,71 +37,154 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
         }
         /** @var array $newValue */
         $normaizledValue = static::valueNormalizer($newValue, $isFromDb, $column);
-        if (count($normaizledValue)) {
-            $newFiles = [];
-            $deleteFiles = [];
-            $uuidsOfFilesToDelete = [];
-            $knownUuids = [];
-            foreach ($normaizledValue as $imageName => $images) {
-                foreach ($images as $imageInfo) {
-                    if (array_key_exists('file', $imageInfo)) {
-                        $imageInfo['delete'] = 1;
-                        $newFiles[$imageName][] = $imageInfo;
-                    }
-                    if (!empty($imageInfo['uuid'])) {
-                        $knownUuids[$imageName][] = $imageInfo['uuid'];
-                        if (array_get($imageInfo, 'delete', false)) {
-                            $uuidsOfFilesToDelete[$imageName][] = $imageInfo['uuid'];
-                        }
-                    }
-                }
-            }
-
-            $oldValue = $valueContainer->getValue();
-            if (!is_array($oldValue)) {
-                $oldValue = json_decode($oldValue, true);
-                if (is_array($oldValue) && !empty($oldValue)) {
-                    $oldValue = static::valueNormalizer($oldValue, false, $column);
-                } else {
-                    $oldValue = [];
-                }
-            }
-
-            $valueContainer->setIsFromDb(false);
-            if (!empty($oldValue)) {
-                foreach ($oldValue as $imageName => $images) {
-                    foreach ($images as $index => $image) {
-                        if (!empty($image['uuid'])) {
-                            $uuid = $image['uuid'];
-                        } else {
-                            $imageConfig = $column->getImageConfiguration($imageName);
-                            $uuid = FileInfo::fromArray(
-                                    $image,
-                                    $imageConfig,
-                                    $valueContainer->getRecord()
-                                )->getUuid();
-                        }
-                        if (in_array($uuid, $uuidsOfFilesToDelete, true)) {
-                            $deleteFiles[$imageName] = $image;
-                            unset($oldValue[$imageName][$index]);
-                        }
-                    }
-                }
-            }
-            $json = json_encode($oldValue, JSON_UNESCAPED_UNICODE);
-            $valueContainer
-                ->setRawValue($oldValue, $json, false)
-                ->setValidValue($json, $oldValue);
-            if (!empty($newFiles) || !empty($deleteFiles)) {
-                $valueContainer->setDataForSavingExtender(['new' => $newFiles, 'delete' => $deleteFiles]);
-            }
-        } else {
+        if (count($normaizledValue) === 0) {
             if ($valueContainer->hasValue()) {
                 $valueContainer->setDataForSavingExtender(['new' => [], 'delete' => $valueContainer->getValue()]);
             }
             $valueContainer->setRawValue('{}', '{}', false)->setValidValue('{}', '{}');
+        } else {
+            list($newFiles, $filesToDelete, $updatedValue) = static::collectDataForSaving($normaizledValue, $valueContainer);
+            $valueContainer->setIsFromDb(false);
+            $json = json_encode($updatedValue, JSON_UNESCAPED_UNICODE);
+            $valueContainer
+                ->setRawValue($updatedValue, $json, false)
+                ->setValidValue($json, $updatedValue);
+            if (!empty($newFiles) || !empty($filesToDelete)) {
+                $valueContainer->setDataForSavingExtender(['new' => $newFiles, 'delete' => $filesToDelete]);
+            }
         }
         return $valueContainer;
+    }
+
+    /**
+     * @param array $normaizledValue
+     * @param RecordValue $valueContainer
+     * @return array
+     * @throws \BadMethodCallException
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
+     * @throws \UnexpectedValueException
+     */
+    static protected function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
+        list($newFiles, $uuidPosition, $uuidsOfFilesToDelete) = static::analyzeUploadedFilesAndData($normaizledValue);
+
+        /** @var ImagesColumn $column */
+        $column = $valueContainer->getColumn();
+        $currentValue = [];
+        if ($valueContainer->hasValue()) {
+            $currentValue = $valueContainer->getValue();
+            if (!is_array($currentValue)) {
+                $currentValue = json_decode($currentValue, true);
+                if (is_array($currentValue) && !empty($currentValue)) {
+                    $currentValue = static::valueNormalizer($currentValue, false, $column);
+                } else {
+                    $currentValue = [];
+                }
+            }
+        }
+
+
+        $filesToDelete = static::getExitstingFilesToDeleteOrUpdatePositions(
+            $currentValue,
+            $valueContainer,
+            $uuidPosition,
+            $uuidsOfFilesToDelete
+        );
+
+        foreach ($column->getImagesConfigurations() as $imageName => $imageConfig) {
+            $fileInfosForGroup = array_get($normaizledValue, $imageName, []);
+            foreach ($fileInfosForGroup as $fileInfo) {
+                if (static::isFileInfoArray($fileInfo)) {
+                    $currentValue[$imageName][] = $fileInfo;
+                }
+            }
+            if (!empty($currentValue[$imageName])) {
+                $currentValue[$imageName] = static::reorderGroupOfFiles($currentValue[$imageName]);
+            }
+        }
+
+        return [$newFiles, $filesToDelete, $currentValue];
+    }
+
+    /**
+     * @param array $normaizledValue
+     * @return array
+     * @throws \UnexpectedValueException
+     */
+    static protected function analyzeUploadedFilesAndData(array $normaizledValue) {
+        $newFiles = [];
+        $uuidsOfFilesToDelete = [];
+        $uuidPosition = [];
+        foreach ($normaizledValue as $imageName => $images) {
+            foreach ($images as $index => $imageInfo) {
+                if (array_key_exists('file', $imageInfo)) {
+                    $imageInfo['deleted'] = true;
+                    $newFiles[$imageName][] = $imageInfo;
+                }
+                if (!empty($imageInfo['uuid'])) {
+                    if (array_get($imageInfo, 'deleted', false)) {
+                        $uuidsOfFilesToDelete[$imageName][] = $imageInfo['uuid'];
+                    } else {
+                        $uuidPosition[$imageName][$imageInfo['uuid']] = array_get($imageInfo, 'position', time() + (int)$index);
+                    }
+                }
+            }
+        }
+        return [$newFiles, $uuidPosition, $uuidsOfFilesToDelete];
+    }
+
+    /**
+     * @param array $currentValue
+     * @param RecordValue $valueContainer
+     * @param array $uuidPosition
+     * @param array $uuidsOfFilesToDelete
+     * @return array
+     * @throws \UnexpectedValueException
+     */
+    static protected function getExitstingFilesToDeleteOrUpdatePositions(
+        array &$currentValue,
+        RecordValue $valueContainer,
+        array $uuidPosition,
+        array $uuidsOfFilesToDelete
+    ) {
+        $filesToDelete = [];
+        if (!empty($currentValue)) {
+            foreach ($currentValue as $imageName => $existingFiles) {
+                $removedIndexes = [];
+                foreach ((array)$existingFiles as $index => $fileData) {
+                    $uuid = static::getFileUuid($imageName, $fileData, $valueContainer);
+                    if (in_array($uuid, array_get($uuidsOfFilesToDelete, $imageName, []), true)) {
+                        $filesToDelete[$imageName][] = $fileData;
+                        $removedIndexes[] = $index;
+                    } else if (array_has($uuidPosition, "{$imageName}.{$uuid}")) {
+                        $currentValue[$imageName][$index]['position'] = $uuidPosition[$imageName][$uuid];
+                    }
+                }
+                foreach ($removedIndexes as $index) {
+                    unset($currentValue[$imageName][$index]);
+                }
+            }
+        }
+        return $filesToDelete;
+    }
+
+    /**
+     * @param array $imageData
+     * @param RecordValue $valueContainer
+     * @param $imageName
+     * @return mixed
+     * @throws \UnexpectedValueException
+     */
+    static protected function getFileUuid($imageName, array $imageData, RecordValue $valueContainer) {
+        return array_get($imageData, 'uuid', function () use ($imageName, $imageData, $valueContainer) {
+            /** @var ImagesColumn $column */
+            $column = $valueContainer->getColumn();
+            return FileInfo::fromArray(
+                    $imageData,
+                    $column->getImageConfiguration($imageName),
+                    $valueContainer->getRecord()
+                )
+                ->getUuid();
+        });
     }
 
     /**
@@ -108,6 +192,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param bool $isFromDb
      * @param Column|ImagesColumn $column
      * @return array
+     * @throws \UnexpectedValueException
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static public function valueNormalizer($value, $isFromDb, Column $column) {
@@ -126,58 +211,100 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
                 unset($value[$imageName]);
                 continue;
             }
-            if ($value[$imageName] instanceof \SplFileInfo) {
-                $value[$imageName] = [['file' => $value[$imageName]]];
-            }
-            if (!is_array($value[$imageName])) {
-                unset($value[$imageName]);
-            }
-            if (static::isFileInfoArray($value[$imageName])) {
-                // not an upload but file info
-                $value[$imageName] = [$value[$imageName]];
-                continue;
+
+            if ($isFromDb) {
+                if (!is_array($value[$imageName])) {
+                    unset($value[$imageName]);
+                    continue;
+                }
+                $value[$imageName] = static::normalizeDbValue($value[$imageName]);
             } else {
-                if (array_has($value[$imageName], 'file') || array_has($value[$imageName], 'deleted')) {
-                    // normalize uploaded file info to be indexed array with file uploads inside
-                    $value[$imageName] = [$value[$imageName]];
+                if ($value[$imageName] instanceof \SplFileInfo) {
+                    $value[$imageName] = $isFromDb ? [] : [['file' => $value[$imageName]]];
                 }
-                $normailzedData = [];
-                foreach ($value[$imageName] as $idx => $fileUploadInfo) {
-                    if (static::isFileInfoArray($fileUploadInfo)) {
-                        unset($fileUploadInfo['deleted']);
-                    } else if (
-                        !is_int($idx)
-                        || (
-                            empty($fileUploadInfo['file'])
-                            && !(bool)array_get($fileUploadInfo, 'deleted', false)
-                        )
-                    ) {
-                        if (!empty($fileUploadInfo['file_data'])) {
-                            $base64FileInfo = json_decode($fileUploadInfo['file_data'], true);
-                            if (is_array($base64FileInfo) && array_has($base64FileInfo, ['data', 'name', 'extension'])) {
-                                $fileUploadInfo = [
-                                    'file' => new Base64UploadedFile(
-                                        $base64FileInfo['data'],
-                                        rtrim($base64FileInfo['name'] . '.' . $base64FileInfo['extension'], '.')
-                                    )
-                                ];
-                            } else {
-                                continue;
-                            }
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        $fileUploadInfo['deleted'] = (bool)array_get($fileUploadInfo, 'deleted', false);
-                    }
-                    $normailzedData[] = $fileUploadInfo;
+                if (!is_array($value[$imageName])) {
+                    unset($value[$imageName]);
+                    continue;
                 }
-                $value[$imageName] = $normailzedData;
+                $value[$imageName] = static::normalizeUploadedFiles($value[$imageName]);
+            }
+
+            if (empty($value[$imageName]) || !is_array($value[$imageName])) {
+                unset($value[$imageName]);
             }
         }
         return array_intersect_key($value, array_flip($imagesNames));
     }
 
+    /**
+     * @param array $existingFiles
+     * @return array
+     */
+    static protected function normalizeDbValue(array $existingFiles) {
+        if (static::isFileInfoArray($existingFiles)) {
+            $existingFiles = [$existingFiles];
+        }
+        return $existingFiles;
+    }
+
+    /**
+     * @param array $uploadedFiles
+     * @return array
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
+     */
+    static protected function normalizeUploadedFiles(array $uploadedFiles) {
+        if (array_has($uploadedFiles, 'file') || array_has($uploadedFiles, 'deleted')) {
+            // normalize uploaded file info to be indexed array with file uploads inside
+            $uploadedFiles = [$uploadedFiles];
+        }
+        $normailzedData = [];
+        foreach ($uploadedFiles as $idx => $fileUploadInfo) {
+            if (!ValidateValue::isInteger($idx)) {
+                continue; //< this is not expected here -> ignore
+            } else if (static::isFileInfoArray($fileUploadInfo)) {
+                // file info array is being saved to DB via static::valueSavingExtender() or manually
+                unset($fileUploadInfo['deleted']);
+                $normailzedData[] = $fileUploadInfo;
+            } else {
+                $fileUploadInfo['deleted'] = (bool)array_get($fileUploadInfo, 'deleted', false);
+                if (!empty($fileUploadInfo['file'])) {
+                    // new file uploaded
+                    $normailzedData[] = $fileUploadInfo;
+                } else if (!empty($fileUploadInfo['file_data'])) {
+                    // new file uploaded as base64 encoded data
+                    $base64FileInfo = json_decode($fileUploadInfo['file_data'], true);
+                    if (is_array($base64FileInfo) && array_has($base64FileInfo, ['data', 'name', 'extension'])) {
+                        $fileUploadInfo = [
+                            'file' => new Base64UploadedFile(
+                                $base64FileInfo['data'],
+                                rtrim($base64FileInfo['name'] . '.' . $base64FileInfo['extension'], '.')
+                            )
+                        ];
+                        if (array_has($base64FileInfo, 'uuid')) {
+                            $fileUploadInfo['uuid'] = $base64FileInfo['uuid'];
+                        }
+                        $normailzedData[] = $fileUploadInfo;
+                    }
+                } else if (array_has($fileUploadInfo, 'uuid')) {
+                    if ((bool)array_get($fileUploadInfo, 'deleted', false)) {
+                        // old file deleted while new one is not provided
+                        $fileUploadInfo['deleted'] = true;
+                        unset($fileUploadInfo['file'], $fileUploadInfo['file_data']);
+                        $normailzedData[] = $fileUploadInfo;
+                    } else if (array_has($fileUploadInfo, 'position')) {
+                        // file already exists but may have changed position
+                        $normailzedData[] = [
+                            'uuid' => $fileUploadInfo['uuid'],
+                            'position' => $fileUploadInfo['position'],
+                            'deleted' => false
+                        ];
+                    }
+                }
+                // ignore any other case
+            }
+        }
+        return $normailzedData;
+    }
 
     /**
      * Validates value. Uses valueValidatorExtender
@@ -185,11 +312,13 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param bool $isFromDb
      * @param Column|ImagesColumn $column
      * @return array
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      * @throws \UnexpectedValueException
      * @throws \PeskyORM\Exception\OrmException
      * @throws \PDOException
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
+     * todo: fix validation for case when all files were deleted while at least 1 file is required
      */
     static public function valueValidator($value, $isFromDb, Column $column) {
         if ($value instanceof RecordValue) {
@@ -295,6 +424,9 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
     static public function valueSavingExtender(RecordValue $valueContainer, $isUpdate, array $savedData) {
         /** @var array $newFiles */
         $updates = $valueContainer->pullDataForSavingExtender();
+        if (empty($updates)) {
+            return;
+        }
 
         /** @var ImagesColumn $column */
         $column = $valueContainer->getColumn();
@@ -310,56 +442,101 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
         }
 
         $newFiles = (array)array_get($updates, 'new', []);
-        $baseSuffix = time();
         if (!empty($newFiles)) {
             $newValue = json_decode($valueContainer->getValue(), true) ?: [];
             /** @var array $fileUploads */
             foreach ($newFiles as $imageName => $fileUploads) {
-                $imageConfig = $column->getImageConfiguration($imageName);
-                $dir = $imageConfig->getAbsolutePathToFileFolder($valueContainer->getRecord());
-                if ($imageConfig->getMaxFilesCount() === 1) {
-                    \File::cleanDirectory($dir);
-                }
-                $filesSaved = 0;
-                foreach ($fileUploads as $uploadInfo) {
-                    $file = array_get($uploadInfo, 'file', false);
-                    if (!empty($file)) {
-                        $fileInfo = FileInfo::fromSplFileInfo($file, $imageConfig, $valueContainer->getRecord(), $baseSuffix + $filesSaved);
-                        $filesSaved++;
-                        // save not modified file to $dir
-                        if ($file instanceof UploadedFile) {
-                            $file->move($dir, $fileInfo->getFileNameWithExtension());
-                        } else {
-                            /** @var \SplFileInfo $file */
-                            \File::copy($file->getRealPath(), $dir . $fileInfo->getFileNameWithExtension());
-                        }
-                        // modify image size if needed
-                        $filePath = $fileInfo->getAbsoluteFilePath();
-                        $imagick = new \Imagick($filePath);
-                        if (
-                            $imagick->getImageWidth() > $imageConfig->getMaxWidth()
-                            && $imagick->resizeImage($imageConfig->getMaxWidth(), 0, $imagick::FILTER_LANCZOS, 1)
-                        ) {
-                            $imagick->writeImage();
-                        }
-                        // update value
-                        $fileInfo->setCustomInfo(array_get($uploadInfo, 'info', []));
-                        $newValue[$imageName][] = $fileInfo->collectImageInfoForDb();
-                    }
-                }
                 if (empty($newValue[$imageName])) {
-                    \File::cleanDirectory($dir);
+                    $newValue[$imageName] = [];
+                }
+                $newValue[$imageName] = static::storeUploadedFiles(
+                    $valueContainer->getRecord(),
+                    $column->getImageConfiguration($imageName),
+                    $fileUploads,
+                    $newValue[$imageName]
+                );
+                if (empty($newValue[$imageName])) {
                     unset($newValue[$imageName]);
                 } else {
-                    // todo reorder here or not?
+                    $newValue[$imageName] = static::reorderGroupOfFiles($newValue[$imageName]);
                 }
-                $valueContainer->getRecord()
-                    ->unsetValue($valueContainer->getColumn()) //< to avoid merging
-                    ->begin()
-                    ->updateValue($valueContainer->getColumn(), $newValue, false)
-                    ->commit();
+            }
+            $valueContainer->getRecord()
+                ->unsetValue($valueContainer->getColumn()) //< to avoid merging
+                ->begin()
+                ->updateValue($valueContainer->getColumn(), $newValue, false)
+                ->commit();
+        }
+    }
+
+    /**
+     * @param RecordInterface $record
+     * @param ImageConfig $imageConfig
+     * @param array $fileUploads
+     * @return array
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
+     * @throws \UnexpectedValueException
+     */
+    static protected function storeUploadedFiles(
+        RecordInterface $record,
+        ImageConfig $imageConfig,
+        array $fileUploads,
+        array $existingFiles
+    ) {
+        $baseSuffix = time();
+        $dir = $imageConfig->getAbsolutePathToFileFolder($record);
+        if ($imageConfig->getMaxFilesCount() === 1) {
+            \File::cleanDirectory($dir);
+        }
+        $filesSaved = 0;
+        foreach ($fileUploads as $uploadInfo) {
+            $file = array_get($uploadInfo, 'file', false);
+            if (!empty($file)) {
+                $fileInfo = FileInfo::fromSplFileInfo($file, $imageConfig, $record, (string)$baseSuffix . (string)$filesSaved);
+                $fileInfo->setPosition(array_get($uploadInfo, 'position', time() + $filesSaved));
+                $filesSaved++;
+                // save not modified file to $dir
+                if ($file instanceof UploadedFile) {
+                    $file->move($dir, $fileInfo->getFileNameWithExtension());
+                } else {
+                    /** @var \SplFileInfo $file */
+                    \File::copy($file->getRealPath(), $dir . $fileInfo->getFileNameWithExtension());
+                }
+                // modify image size if needed
+                $filePath = $fileInfo->getAbsoluteFilePath();
+                $imagick = new \Imagick($filePath);
+                if (
+                    $imagick->getImageWidth() > $imageConfig->getMaxWidth()
+                    && $imagick->resizeImage($imageConfig->getMaxWidth(), 0, $imagick::FILTER_LANCZOS, 1)
+                ) {
+                    $imagick->writeImage();
+                }
+                // update value
+                $fileInfo->setCustomInfo(array_get($uploadInfo, 'info', []));
+                $existingFiles[] = $fileInfo->collectImageInfoForDb();
             }
         }
+        if (empty($existingFiles)) {
+            \File::cleanDirectory($dir);
+        }
+        return $existingFiles;
+    }
+
+    /**
+     * @param array $filesInfos
+     * @return array
+     */
+    static protected function reorderGroupOfFiles(array $filesInfos) {
+        usort($filesInfos, function ($item1, $item2) {
+            $pos1 = (int)array_get($item1, 'position', time() + 100);
+            $pos2 = (int)array_get($item2, 'position', time() + 101);
+            if ($pos1 === $pos2) {
+                return 0;
+            } else {
+                return $pos1 > $pos2 ? 1 : -1;
+            }
+        });
+        return array_values($filesInfos);
     }
 
     /**
@@ -391,6 +568,7 @@ class ImagesUploadingColumnClosures extends DefaultColumnClosures{
      * @param RecordValue $valueContainer
      * @param string $format
      * @return mixed
+     * @throws \PeskyORM\Exception\OrmException
      * @throws \BadMethodCallException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException

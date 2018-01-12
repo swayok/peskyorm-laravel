@@ -13,11 +13,16 @@ class FileConfig {
     const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     const XLS = 'application/ms-excel';
     const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const PPT = 'application/vnd.ms-powerpoint';
+    const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
     const CSV = 'text/csv';
     const PNG = 'image/png';
     const JPEG = 'image/jpeg';
     const GIF = 'image/gif';
     const SVG = 'image/svg';
+    const ZIP = 'application/zip';
+    const RAR = 'application/x-rar-compressed';
+    const GZIP = 'application/gzip';
     const MP4_VIDEO = 'video/mp4';
     const MP4_AUDIO = 'audio/mp4';
 
@@ -32,6 +37,8 @@ class FileConfig {
         self::DOCX => 'docx',
         self::XLS => 'xls',
         self::XLSX => 'xlsx',
+        self::PPT => 'ppt',
+        self::PPTX => 'pptx',
         self::PNG => 'png',
         self::JPEG => 'jpg',
         self::GIF => 'gif',
@@ -39,6 +46,9 @@ class FileConfig {
         self::MP4_VIDEO => 'mp4',
         self::MP4_AUDIO => 'mp3',
         self::CSV => 'csv',
+        self::ZIP => 'zip',
+        self::RAR => 'rar',
+        self::GZIP => 'gzip',
     ];
 
     /** @var string */
@@ -71,6 +81,15 @@ class FileConfig {
         self::DOCX,
         self::XLS,
         self::XLSX,
+        self::PPT,
+        self::PPTX,
+        self::ZIP,
+        self::RAR,
+        self::GZIP,
+        self::PNG,
+        self::JPEG,
+        self::SVG,
+        self::GIF,
     ];
 
     /**
@@ -100,6 +119,15 @@ class FileConfig {
             'application/vnd.ms-excel',
             'application/x-excel',
             'application/x-msexcel',
+        ],
+        self::ZIP => [
+            'application/x-compressed',
+            'application/x-zip-compressed',
+            'multipart/x-zip'
+        ],
+        self::GZIP => [
+            'application/x-gzip',
+            'multipart/x-gzip',
         ]
     ];
 

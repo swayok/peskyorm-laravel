@@ -5,12 +5,20 @@ namespace PeskyORMLaravel\Db\Column;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
 use PeskyORMLaravel\Db\Column\Utils\FileConfig;
+use PeskyORMLaravel\Db\Column\Utils\FilesUploadingColumnClosures;
 use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
 use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
 
 class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
-    //protected $defaultClosuresClass = ImagesUploadingColumnClosures::class;
+    /**
+     * @var string
+     */
+    protected $defaultClosuresClass = FilesUploadingColumnClosures::class;
+    /**
+     * @var string
+     */
+    protected $fileConfigClass = FileConfig::class;
     /**
      * @var string
      */
@@ -23,10 +31,6 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @var array
      */
     protected $iterator;
-    /**
-     * @var string
-     */
-    protected $fileConfigClass = FileConfig::class;
 
     const VALUE_MUST_BE_ARRAY = 'value_must_be_array';
     const IMAGE_TYPE_IS_NOT_ALLOWED = 'invalid_image_type';
@@ -147,8 +151,8 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
     }
 
     /**
-     * @param string $name - image field name
-     * @param \Closure $configurator = function (FileConfig $imageConfig) { //modify $imageConfig }
+     * @param string $name - file field name
+     * @param \Closure $configurator = function (FileConfig $fileConfig) { //modify $fileConfig }
      * @return $this
      */
     public function addFileConfiguration($name, \Closure $configurator = null) {
@@ -339,7 +343,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @since 5.0.0
      */
     public function offsetUnset($offset) {
-        throw new \BadMethodCallException('Removing image configuration is forbidden');
+        throw new \BadMethodCallException('Removing file configuration is forbidden');
     }
 
 }

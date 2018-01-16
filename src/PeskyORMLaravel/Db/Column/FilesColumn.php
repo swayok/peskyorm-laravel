@@ -32,18 +32,16 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      */
     protected $iterator;
 
-    const VALUE_MUST_BE_ARRAY = 'value_must_be_array';
     const IMAGE_TYPE_IS_NOT_ALLOWED = 'invalid_image_type';
     const FILE_TYPE_IS_NOT_ALLOWED = 'invalid_file_type';
     const FILE_SIZE_IS_TOO_LARGE = 'file_size_is_too_large';
     const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
 
-    static protected $additionalValidationErrorsLocalization = [
-        self::VALUE_MUST_BE_ARRAY => 'Value must be an array',
-        self::IMAGE_TYPE_IS_NOT_ALLOWED => 'Uploaded image type \'%s\' is not allowed for \'%s\'. Allowed file types: %s',
-        self::FILE_TYPE_IS_NOT_ALLOWED => 'Uploaded file type \'%s\' is not allowed for \'%s\'. Allowed file types: %s',
-        self::FILE_SIZE_IS_TOO_LARGE => 'Uploaded file size is too large for \'%s\'. Maximum file size is %s kilobytes.',
-        self::FILE_IS_NOT_A_VALID_IMAGE => 'Uploaded file for \'%s\' is corrupted or it is not a valid image',
+    static protected $additionalValidationErrorsMessages = [
+        self::IMAGE_TYPE_IS_NOT_ALLOWED => "Uploaded image type '%s' is not allowed for '%s'. Allowed file types: %s.",
+        self::FILE_TYPE_IS_NOT_ALLOWED => "Uploaded file type '%s' is not allowed for '%s'. Allowed file types: %s.",
+        self::FILE_SIZE_IS_TOO_LARGE => "Uploaded file size is too large for '%s'. Maximum file size is %s kilobytes.",
+        self::FILE_IS_NOT_A_VALID_IMAGE => "Uploaded file for '%s' is corrupted or it is not a valid image.",
     ];
 
     /**
@@ -219,8 +217,8 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
     /**
      * @return array
      */
-    static public function getValidationErrorsLocalization() {
-        return array_merge(parent::getValidationErrorsLocalization(), static::$additionalValidationErrorsLocalization);
+    static public function getValidationErrorsMessages() {
+        return static::$validationErrorsMessages ?: array_merge(static::$additionalValidationErrorsMessages, parent::getValidationErrorsMessages());
     }
 
     /**

@@ -33,7 +33,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
         }
 
         $filesGroupName = $fileConfig->getName();
-        $localizations = $column::getValidationErrorsLocalization();
+        $localizations = $column::getValidationErrorsMessages();
         $errorsKey = $filesGroupName . '.' . $fileIndex;
 
         if (!ValidateValue::isUploadedImage($file, true)) {

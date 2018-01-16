@@ -326,7 +326,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
         if ($isFromDb || is_string($value)) {
             return parent::valueValidator($value, $isFromDb, $column);
         }
-        $localizations = $column::getValidationErrorsLocalization();
+        $localizations = $column::getValidationErrorsMessages();
         if (!is_array($value)) {
             return [RecordValueHelpers::getErrorMessage($localizations, $column::VALUE_MUST_BE_ARRAY)];
         }
@@ -387,7 +387,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
         $fileIndex,
         array &$errors
     ) {
-        $localizations = $column::getValidationErrorsLocalization();
+        $localizations = $column::getValidationErrorsMessages();
         $filesGroupName = $fileConfig->getName();
         $errorsKey = $filesGroupName . '.' . $fileIndex;
 

@@ -4,9 +4,9 @@ namespace PeskyORMLaravel\Db\Column;
 
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
-use PeskyORMLaravel\Db\Column\Utils\FileConfig;
+use PeskyORMLaravel\Db\Column\Utils\FilesGroupConfig;
 use PeskyORMLaravel\Db\Column\Utils\FilesUploadingColumnClosures;
-use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
+use PeskyORMLaravel\Db\Column\Utils\ImagesGroupConfig;
 use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
 
 class FilesColumn extends Column implements \Iterator, \ArrayAccess {
@@ -18,13 +18,13 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
     /**
      * @var string
      */
-    protected $fileConfigClass = FileConfig::class;
+    protected $fileConfigClass = FilesGroupConfig::class;
     /**
      * @var string
      */
     protected $relativeUploadsFolderPath;
     /**
-     * @var ImageConfig[]|FileConfig[]|\Closure[]
+     * @var ImagesGroupConfig[]|FilesGroupConfig[]|\Closure[]
      */
     protected $configs = [];
     /**
@@ -76,7 +76,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * Path to folder is relative to public_path()
-     * @param string|\Closure $folder - function (RecordInterface $record, FileConfig $fileConfig) { return 'path/to/folder'; }
+     * @param string|\Closure $folder - function (RecordInterface $record, FilesGroupConfig $fileConfig) { return 'path/to/folder'; }
      * @return $this
      */
     public function setRelativeUploadsFolderPath($folder) {
@@ -86,10 +86,10 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param RecordInterface $record
-     * @param FileConfig $fileConfig
+     * @param FilesGroupConfig $fileConfig
      * @return string
      */
-    protected function getRelativeUploadsFolderPath(RecordInterface $record, FileConfig $fileConfig) {
+    protected function getRelativeUploadsFolderPath(RecordInterface $record, FilesGroupConfig $fileConfig) {
         if ($this->relativeUploadsFolderPath instanceof \Closure) {
             return call_user_func($this->relativeUploadsFolderPath, $record, $fileConfig);
         } else {
@@ -99,10 +99,10 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param RecordInterface $record
-     * @param FileConfig $fileConfig
+     * @param FilesGroupConfig $fileConfig
      * @return string
      */
-    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig) {
+    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FilesGroupConfig $fileConfig) {
         $table = $record::getTable();
         if ($table instanceof KeyValueTableInterface) {
             $fkName = $table->getMainForeignKeyColumnName();
@@ -116,19 +116,19 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param RecordInterface $record
-     * @param FileConfig $fileConfig
+     * @param FilesGroupConfig $fileConfig
      * @return string
      */
-    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FileConfig $fileConfig) {
+    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FilesGroupConfig $fileConfig) {
         return static::normalizeFolderPath(public_path($this->getRelativeUploadsFolderPath($record, $fileConfig)));
     }
 
     /**
      * @param RecordInterface $record
-     * @param FileConfig $fileConfig
+     * @param FilesGroupConfig $fileConfig
      * @return string
      */
-    public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig) {
+    public function getRelativeFileUploadsUrl(RecordInterface $record, FilesGroupConfig $fileConfig) {
         return static::normalizeFolderUrl($this->getRelativeUploadsFolderPath($record, $fileConfig));
     }
 
@@ -150,23 +150,23 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param string $name - file field name
-     * @param \Closure $configurator = function (FileConfig $fileConfig) { //modify $fileConfig }
+     * @param \Closure $configurator = function (FilesGroupConfig $fileConfig) { //modify $fileConfig }
      * @return $this
      */
-    public function addFileConfiguration($name, \Closure $configurator = null) {
+    public function addFilesGroupConfiguration($name, \Closure $configurator = null) {
         $this->configs[$name] = $configurator;
         $this->iterator = null;
         return $this;
     }
 
     /**
-     * @return FileConfig[]|ImageConfig[]
+     * @return FilesGroupConfig[]|ImagesGroupConfig[]
      * @throws \UnexpectedValueException
      */
-    public function getFilesConfigurations() {
+    public function getFilesGroupsConfigurations() {
         foreach ($this->configs as $name => $config) {
             if (!(get_class($config) === $this->fileConfigClass)) {
-                $this->getFileConfiguration($name);
+                $this->getFilesGroupConfiguration($name);
             }
         }
         return $this->configs;
@@ -174,21 +174,21 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param string $name
-     * @return FileConfig|ImageConfig
+     * @return FilesGroupConfig|ImagesGroupConfig
      * @throws \UnexpectedValueException
      */
-    public function getFileConfiguration($name) {
-        if (!$this->hasFileConfiguration($name)) {
+    public function getFilesGroupConfiguration($name) {
+        if (!$this->hasFilesGroupConfiguration($name)) {
             throw new \UnexpectedValueException("There is no configuration for file called '$name'");
         } else if (!is_object($this->configs[$name]) || get_class($this->configs[$name]) !== $this->fileConfigClass) {
             $class = $this->fileConfigClass;
-            /** @var FileConfig $fileConfig */
+            /** @var FilesGroupConfig $fileConfig */
             $fileConfig = new $class($name);
             $fileConfig
-                ->setAbsolutePathToFileFolder(function (RecordInterface $record, FileConfig $fileConfig) {
+                ->setAbsolutePathToFileFolder(function (RecordInterface $record, FilesGroupConfig $fileConfig) {
                     return $this->getAbsoluteFileUploadsFolder($record, $fileConfig);
                 })
-                ->setRelativeUrlToFileFolder(function (RecordInterface $record, FileConfig $fileConfig) {
+                ->setRelativeUrlToFileFolder(function (RecordInterface $record, FilesGroupConfig $fileConfig) {
                     return $this->getRelativeFileUploadsUrl($record, $fileConfig);
                 });
             if ($this->configs[$name] instanceof \Closure) {
@@ -203,14 +203,14 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @param string $name
      * @return bool
      */
-    public function hasFileConfiguration($name) {
+    public function hasFilesGroupConfiguration($name) {
         return array_key_exists($name, $this->configs);
     }
 
     /**
      * @return bool
      */
-    public function hasFilesConfigurations() {
+    public function hasFilesGroupsConfigurations() {
         return !empty($this->configs);
     }
 
@@ -234,12 +234,12 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
     /**
      * Return the current element
      * @link http://php.net/manual/en/iterator.current.php
-     * @return ImageConfig|FileConfig
+     * @return ImagesGroupConfig|FilesGroupConfig
      * @throws \UnexpectedValueException
      * @since 5.0.0
      */
     public function current() {
-        return $this->getFileConfiguration($this->getIterator()->key());
+        return $this->getFilesGroupConfiguration($this->getIterator()->key());
     }
 
     /**
@@ -305,12 +305,12 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @param mixed $offset <p>
      * The offset to retrieve.
      * </p>
-     * @return FileConfig
+     * @return FilesGroupConfig
      * @throws \UnexpectedValueException
      * @since 5.0.0
      */
     public function offsetGet($offset) {
-        return $this->getFileConfiguration($offset);
+        return $this->getFilesGroupConfiguration($offset);
     }
 
     /**

@@ -8,20 +8,20 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class Base64UploadedFile extends UploadedFile {
 
     static protected $extToMime = [
-        'txt' => FileConfig::TXT,
-        'pdf' => FileConfig::PDF,
-        'rtf' => FileConfig::RTF,
-        'doc' => FileConfig::DOC,
-        'docx' => FileConfig::DOCX,
-        'xls' => FileConfig::XLS,
-        'xlsx' => FileConfig::XLSX,
-        'png' => FileConfig::PNG,
-        'jpg' => FileConfig::JPEG,
-        'gif' => FileConfig::GIF,
-        'svg' => FileConfig::SVG,
-        'mp4' => FileConfig::MP4_VIDEO,
-        'mp3' => FileConfig::MP4_AUDIO,
-        'csv' => FileConfig::CSV,
+        'txt' => FilesGroupConfig::TXT,
+        'pdf' => FilesGroupConfig::PDF,
+        'rtf' => FilesGroupConfig::RTF,
+        'doc' => FilesGroupConfig::DOC,
+        'docx' => FilesGroupConfig::DOCX,
+        'xls' => FilesGroupConfig::XLS,
+        'xlsx' => FilesGroupConfig::XLSX,
+        'png' => FilesGroupConfig::PNG,
+        'jpg' => FilesGroupConfig::JPEG,
+        'gif' => FilesGroupConfig::GIF,
+        'svg' => FilesGroupConfig::SVG,
+        'mp4' => FilesGroupConfig::MP4_VIDEO,
+        'mp3' => FilesGroupConfig::MP4_AUDIO,
+        'csv' => FilesGroupConfig::CSV,
     ];
 
     /**

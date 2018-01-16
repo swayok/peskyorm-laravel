@@ -15,7 +15,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
     /**
      * Validate uploaded file contents (mime type, size, etc.)
      * @param Column|ImagesColumn $column
-     * @param FileConfig $fileConfig
+     * @param FilesGroupConfig $fileConfig
      * @param SymfonyUploadedFile $file
      * @param int $fileIndex
      * @param array $errors
@@ -23,7 +23,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      */
     static protected function validateUploadedFileContents(
         Column $column,
-        FileConfig $fileConfig,
+        FilesGroupConfig $fileConfig,
         SymfonyUploadedFile $file,
         $fileIndex,
         array &$errors
@@ -51,7 +51,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
                 RecordValueHelpers::getErrorMessage($localizations, $column::FILE_IS_NOT_A_VALID_IMAGE),
                 $filesGroupName
             );
-        } else if (!in_array($imagick->getImageMimeType(), $fileConfig->getAllowedFileTypes(), true)) {
+        } else if (!in_array($imagick->getImageMimeType(), $fileConfig->getAllowedMimeTypes(), true)) {
             if (!array_key_exists($errorsKey, $errors)) {
                 $errors[$errorsKey] = [];
             }
@@ -59,7 +59,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
                 RecordValueHelpers::getErrorMessage($localizations, $column::IMAGE_TYPE_IS_NOT_ALLOWED),
                 $imagick->getImageMimeType(),
                 $filesGroupName,
-                implode(', ', $fileConfig->getAllowedFileTypes())
+                implode(', ', $fileConfig->getAllowedMimeTypes())
             );
         }
         $imagick->destroy();
@@ -77,9 +77,9 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
 
     /**
      * @param FileInfo $fileInfo
-     * @param FileConfig|ImageConfig $fileConfig
+     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfig $fileConfig) {
+    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FilesGroupConfig $fileConfig) {
         // modify image size if needed
         $filePath = $fileInfo->getAbsoluteFilePath();
         $imagick = new \Imagick($filePath);

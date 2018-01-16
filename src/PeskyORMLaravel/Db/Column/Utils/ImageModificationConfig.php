@@ -28,10 +28,10 @@ class ImageModificationConfig {
     const LEFT = 4;
     const RIGHT = 5;
 
-    const PNG = ImageConfig::PNG;
-    const JPEG = ImageConfig::JPEG;
-    const GIF = ImageConfig::GIF;
-    const SVG = ImageConfig::SVG;
+    const PNG = ImagesGroupConfig::PNG;
+    const JPEG = ImagesGroupConfig::JPEG;
+    const GIF = ImagesGroupConfig::GIF;
+    const SVG = ImagesGroupConfig::SVG;
     const SAME_AS_ORIGINAL = null;
 
     static protected $typeToExt = [
@@ -134,7 +134,7 @@ class ImageModificationConfig {
     public function setFitMode($fitMode) {
         if (!in_array($fitMode, [static::CONTAIN, static::COVER, static::RESIZE_LARGER], true)) {
             throw new \InvalidArgumentException(
-                '$fitMode argument must be one of: ImageConfig::COVER, ImageConfig::CONTAIN, ImageConfig::RESIZE_LARGER'
+                '$fitMode argument must be one of: ImagesGroupConfig::COVER, ImagesGroupConfig::CONTAIN, ImagesGroupConfig::RESIZE_LARGER'
             );
         }
         $this->fitMode = $fitMode;
@@ -157,7 +157,7 @@ class ImageModificationConfig {
     public function setVerticalAlign($verticalAlign) {
         if (!in_array($verticalAlign, [static::TOP, static::CENTER, static::BOTTOM], true)) {
             throw new \InvalidArgumentException(
-                '$verticalAlign argument must be one of: ImageConfig::TOP, ImageConfig::CENTER, ImageConfig::BOTTOM'
+                '$verticalAlign argument must be one of: ImagesGroupConfig::TOP, ImagesGroupConfig::CENTER, ImagesGroupConfig::BOTTOM'
             );
         }
         $this->verticalAlign = $verticalAlign;
@@ -179,7 +179,7 @@ class ImageModificationConfig {
     public function setHorizontalAlign($horizontalAlign) {
         if (!in_array($horizontalAlign, [static::LEFT, static::CENTER, static::RIGHT], true)) {
             throw new \InvalidArgumentException(
-                '$horizontalAlign argument must be one of: ImageConfig::LEFT, ImageConfig::CENTER, ImageConfig::RIGHT'
+                '$horizontalAlign argument must be one of: ImagesGroupConfig::LEFT, ImagesGroupConfig::CENTER, ImagesGroupConfig::RIGHT'
             );
         }
         $this->horizontalAlign = $horizontalAlign;

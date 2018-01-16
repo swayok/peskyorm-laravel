@@ -2,7 +2,7 @@
 
 namespace PeskyORMLaravel\Db\Column\Utils;
 
-class ImageConfig extends FileConfig {
+class ImagesGroupConfig extends FilesGroupConfig {
 
     /** @var int */
     protected $maxWidth = 1920;
@@ -12,7 +12,7 @@ class ImageConfig extends FileConfig {
     /**
      * @var array
      */
-    protected $defaultAllowedFileTypes = [
+    protected $defaultAllowedMimeTypes = [
         self::PNG,
         self::JPEG,
         self::SVG,
@@ -53,19 +53,19 @@ class ImageConfig extends FileConfig {
     }
 
     /**
-     * @param array $allowedFileTypes - combination of ImageConfig::PNG, ImageConfig::JPEG, ImageConfig::GIF, ImageConfig::SVG
+     * @param array $allowedFileTypes - combination of ImagesGroupConfig::PNG, ImagesGroupConfig::JPEG, ImagesGroupConfig::GIF, ImagesGroupConfig::SVG
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function setAllowedFileTypes(...$allowedFileTypes) {
+    public function setAllowedMimeTypes(...$allowedFileTypes) {
         if (count($allowedFileTypes) === 1 && isset($allowedFileTypes[0]) && is_array($allowedFileTypes[0])) {
             $allowedFileTypes = $allowedFileTypes[0];
         }
-        parent::setAllowedFileTypes($allowedFileTypes);
+        parent::setAllowedMimeTypes($allowedFileTypes);
         $unknownTypes = array_diff(
-            $this->allowedFileTypes,
+            $this->allowedMimeTypes,
             [static::PNG, static::JPEG, static::GIF, static::SVG],
-            $this->allowedFileTypesAliases
+            $this->allowedMimeTypesAliases
         );
         if (count($unknownTypes) > 0) {
             throw new \InvalidArgumentException(

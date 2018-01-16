@@ -2,13 +2,13 @@
 
 namespace PeskyORMLaravel\Db\Column;
 
-use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
+use PeskyORMLaravel\Db\Column\Utils\ImagesGroupConfig;
 use PeskyORMLaravel\Db\Column\Utils\ImagesUploadingColumnClosures;
 
 class ImagesColumn extends FilesColumn {
 
     protected $defaultClosuresClass = ImagesUploadingColumnClosures::class;
-    protected $fileConfigClass = ImageConfig::class;
+    protected $fileConfigClass = ImagesGroupConfig::class;
 
     public function isItAnImage() {
         return true;
@@ -16,43 +16,43 @@ class ImagesColumn extends FilesColumn {
 
     /**
      * @param string $name - image field name
-     * @param \Closure $configurator = function (ImageConfig $imageConfig) { //modify $imageConfig }
+     * @param \Closure $configurator = function (ImagesGroupConfig $imageConfig) { //modify $imageConfig }
      * @return $this
      */
-    public function addImageConfiguration($name, \Closure $configurator = null) {
-        return $this->addFileConfiguration($name, $configurator);
+    public function addImagesGroupConfiguration($name, \Closure $configurator = null) {
+        return $this->addFilesGroupConfiguration($name, $configurator);
     }
 
     /**
-     * @return ImageConfig[]
+     * @return ImagesGroupConfig[]
      * @throws \UnexpectedValueException
      */
-    public function getImagesConfigurations() {
-        return $this->getFilesConfigurations();
+    public function getImagesGroupsConfigurations() {
+        return $this->getFilesGroupsConfigurations();
     }
 
     /**
      * @param string $name
-     * @return ImageConfig
+     * @return ImagesGroupConfig
      * @throws \UnexpectedValueException
      */
-    public function getImageConfiguration($name) {
-        return $this->getFileConfiguration($name);
+    public function getImagesGroupConfiguration($name) {
+        return $this->getFilesGroupConfiguration($name);
     }
 
     /**
      * @return bool
      */
-    public function hasImagesConfigurations() {
-        return $this->hasFilesConfigurations();
+    public function hasImagesGroupsConfigurations() {
+        return $this->hasFilesGroupsConfigurations();
     }
 
     /**
      * @param string $name
      * @return bool
      */
-    public function hasImageConfiguration($name) {
-        return $this->hasFileConfiguration($name);
+    public function hasImagesGroupConfiguration($name) {
+        return $this->hasFilesGroupConfiguration($name);
     }
 
 }

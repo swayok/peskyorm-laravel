@@ -4,7 +4,7 @@ namespace PeskyORMLaravel\Db\Column\Utils;
 
 use PeskyORM\ORM\RecordInterface;
 
-class FileConfig {
+class FilesGroupConfig {
 
     const TXT = 'text/plain';
     const PDF = 'application/pdf';
@@ -25,11 +25,20 @@ class FileConfig {
     const GZIP = 'application/gzip';
     const MP4_VIDEO = 'video/mp4';
     const MP4_AUDIO = 'audio/mp4';
+    const UNKNOWN = 'application/octet-stream';
+
+    const TYPE_FILE = 'file';
+    const TYPE_IMAGE = 'image';
+    const TYPE_VIDEO = 'video';
+    const TYPE_AUDIO = 'audio';
+    const TYPE_TEXT = 'text';
+    const TYPE_ARCHIVE = 'archive';
+    const TYPE_OFFICE = 'office';
 
     /**
      * @var array
      */
-    protected $typeToExt = [
+    protected $mimeToExt = [
         self::TXT => 'txt',
         self::PDF => 'pdf',
         self::RTF => 'rtf',
@@ -69,11 +78,11 @@ class FileConfig {
     /**
      * @var array
      */
-    protected $allowedFileTypes = [];
+    protected $allowedMimeTypes = [];
     /**
      * @var array
      */
-    protected $defaultAllowedFileTypes = [
+    protected $defaultAllowedMimeTypes = [
         self::TXT,
         self::PDF,
         self::RTF,
@@ -95,7 +104,7 @@ class FileConfig {
     /**
      * @var array
      */
-    protected $allowedFileTypesAliases = [];
+    protected $allowedMimeTypesAliases = [];
 
     /**
      * List of aliases for file types.
@@ -103,7 +112,7 @@ class FileConfig {
      * For example: image/jpeg file type has alias image/x-jpeg
      * @var array
      */
-    protected $fileTypeAliases = [
+    static protected $mimeTypeAliases = [
         self::JPEG => [
             'image/x-jpeg'
         ],
@@ -131,14 +140,60 @@ class FileConfig {
         ]
     ];
 
+    static protected $mimeTypeToFileType = [
+        self::TXT => self::TYPE_TEXT,
+        self::PDF => self::TYPE_OFFICE,
+        self::RTF => self::TYPE_TEXT,
+        self::DOC => self::TYPE_OFFICE,
+        self::DOCX => self::TYPE_OFFICE,
+        self::XLS => self::TYPE_OFFICE,
+        self::XLSX => self::TYPE_OFFICE,
+        self::CSV => self::TYPE_TEXT,
+        self::PPT => self::TYPE_OFFICE,
+        self::PPTX => self::TYPE_OFFICE,
+        self::PNG => self::TYPE_IMAGE,
+        self::JPEG => self::TYPE_IMAGE,
+        self::GIF => self::TYPE_IMAGE,
+        self::SVG => self::TYPE_IMAGE,
+        self::MP4_VIDEO => self::TYPE_VIDEO,
+        self::MP4_AUDIO => self::TYPE_AUDIO,
+        self::ZIP => self::TYPE_ARCHIVE,
+        self::RAR => self::TYPE_ARCHIVE,
+        self::GZIP => self::TYPE_ARCHIVE,
+    ];
+
     /**
      * @var null|\Closure
      */
     protected $fileNameBuilder;
 
+    /**
+     * @param string|null $mimeType
+     * @return string
+     */
+    static public function detectFileTypeByMimeType($mimeType) {
+        if (empty($mimeType) || !is_string($mimeType)) {
+            return static::UNKNOWN;
+        }
+        $mimeType = mb_strtolower($mimeType);
+        if (array_key_exists($mimeType, static::$mimeTypeToFileType)) {
+            return static::$mimeTypeToFileType[$mimeType];
+        }
+        foreach (static::$mimeTypeAliases as $mime => $aliases) {
+            if (in_array($mimeType, $aliases, true)) {
+                return static::$mimeTypeToFileType[$mime];
+            }
+        }
+        return static::UNKNOWN;
+    }
+
+    /**
+     * @param string $name
+     * @throws \InvalidArgumentException
+     */
     public function __construct($name) {
         $this->name = $name;
-        $this->setAllowedFileTypes($this->defaultAllowedFileTypes);
+        $this->setAllowedMimeTypes($this->defaultAllowedMimeTypes);
     }
 
     /**
@@ -211,34 +266,34 @@ class FileConfig {
      * @param bool $withAliases
      * @return array
      */
-    public function getAllowedFileTypes($withAliases = true) {
-        return $withAliases ? $this->allowedFileTypes : array_diff($this->allowedFileTypes, $this->allowedFileTypesAliases);
+    public function getAllowedMimeTypes($withAliases = true) {
+        return $withAliases ? $this->allowedMimeTypes : array_diff($this->allowedMimeTypes, $this->allowedMimeTypesAliases);
     }
 
     /**
      * @return array
      */
     public function getAllowedFileExtensions() {
-        return array_values(array_intersect_key($this->typeToExt, array_flip($this->getAllowedFileTypes(false))));
+        return array_values(array_intersect_key($this->mimeToExt, array_flip($this->getAllowedMimeTypes(false))));
     }
 
     /**
-     * @param array $allowedFileTypes
+     * @param array $allowedMimeTypes
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function setAllowedFileTypes(...$allowedFileTypes) {
-        if (count($allowedFileTypes) === 1 && isset($allowedFileTypes[0]) && is_array($allowedFileTypes[0])) {
-            $allowedFileTypes = $allowedFileTypes[0];
+    public function setAllowedMimeTypes(...$allowedMimeTypes) {
+        if (count($allowedMimeTypes) === 1 && isset($allowedMimeTypes[0]) && is_array($allowedMimeTypes[0])) {
+            $allowedMimeTypes = $allowedMimeTypes[0];
         }
-        $this->allowedFileTypesAliases = [];
-        /** @var array $allowedFileTypes */
-        foreach ($allowedFileTypes as $fileType) {
-            if (!empty($this->fileTypeAliases[$fileType])) {
-                $this->allowedFileTypesAliases = array_merge($this->allowedFileTypesAliases, (array)$this->fileTypeAliases[$fileType]);
+        $this->allowedMimeTypesAliases = [];
+        /** @var array $allowedMimeTypes */
+        foreach ($allowedMimeTypes as $fileType) {
+            if (!empty(static::$mimeTypeAliases[$fileType])) {
+                $this->allowedMimeTypesAliases = array_merge($this->allowedMimeTypesAliases, (array)static::$mimeTypeAliases[$fileType]);
             }
         }
-        $this->allowedFileTypes = array_merge($allowedFileTypes, $this->allowedFileTypesAliases);
+        $this->allowedMimeTypes = array_merge($allowedMimeTypes, $this->allowedMimeTypesAliases);
         return $this;
     }
 
@@ -279,7 +334,7 @@ class FileConfig {
      */
     protected function getFileNameBuilder() {
         if (!$this->fileNameBuilder) {
-            $this->fileNameBuilder = function (FileConfig $fileConfig, $fileSuffix = null) {
+            $this->fileNameBuilder = function (FilesGroupConfig $fileConfig, $fileSuffix = null) {
                 return $fileConfig->getName() . (string)$fileSuffix;
             };
         }
@@ -289,7 +344,7 @@ class FileConfig {
     /**
      * Function that will build a name for a new file (without extension)
      * @param \Closure $fileNameBuilder -
-     *    function (FileConfig $fileConfig, $fileSuffix = null) { return $fileConfig->getName() . (string)$fileSuffix }
+     *    function (FilesGroupConfig $fileConfig, $fileSuffix = null) { return $fileConfig->getName() . (string)$fileSuffix }
      * @return $this
      */
     public function setFileNameBuilder(\Closure $fileNameBuilder) {
@@ -306,7 +361,7 @@ class FileConfig {
         $fileName = call_user_func($this->getFileNameBuilder(), $this, $fileSuffix);
         if (empty($fileName) || !is_string($fileName)) {
             throw new \UnexpectedValueException(
-                'Value returned from FileConfig->fileNameBuilder must be a not empty string'
+                'Value returned from FilesGroupConfig->fileNameBuilder must be a not empty string'
             );
         }
         return $fileName;
@@ -321,7 +376,7 @@ class FileConfig {
             'max_files_count' => $this->getMaxFilesCount(),
             'max_file_size' => $this->getMaxFileSize(),
             'allowed_extensions' => $this->getAllowedFileExtensions(),
-            'allowed_mime_types' => $this->getAllowedFileTypes(),
+            'allowed_mime_types' => $this->getAllowedMimeTypes(),
         ];
     }
 }

@@ -78,15 +78,42 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
     /**
      * @param FileInfo $fileInfo
      * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @throws \UnexpectedValueException
      */
     static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FilesGroupConfig $fileConfig) {
         // modify image size if needed
-        $filePath = $fileInfo->getAbsoluteFilePath();
-        $imagick = new \Imagick($filePath);
+        $imagick = new \Imagick($fileInfo->getAbsoluteFilePath());
+        // aspect ratio
+        $imageChanged = false;
+        if (!empty($fileConfig->getAspectRatio())) {
+            $imageAspectRatio = $imagick->getImageWidth() / $imagick->getImageHeight();
+            if (round($imageAspectRatio, 3) !== round($fileConfig->getAspectRatio(), 3)) {
+                if ($fileConfig->getAspectRatio() > $imageAspectRatio) {
+                    $newHeight = round($imagick->getImageWidth() / $fileConfig->getAspectRatio());
+                    $newWidth = $imagick->getImageWidth();
+                } else {
+                    $newHeight = $imagick->getImageHeight();
+                    $newWidth = round($imagick->getImageHeight() * $fileConfig->getAspectRatio());
+                }
+                $success = $imagick->cropImage(
+                    $newWidth,
+                    $newHeight,
+                    abs(round(($newWidth - $imagick->getImageWidth()) / 2)),
+                    abs(round(($newHeight - $imagick->getImageHeight()) / 2))
+                );
+                if ($success) {
+                    $imageChanged = true;
+                }
+            }
+        }
+        // width/height limits
         if (
             $imagick->getImageWidth() > $fileConfig->getMaxWidth()
             && $imagick->resizeImage($fileConfig->getMaxWidth(), 0, $imagick::FILTER_LANCZOS, 1)
         ) {
+            $imageChanged = true;
+        }
+        if ($imageChanged) {
             $imagick->writeImage();
         }
         $imagick->destroy();

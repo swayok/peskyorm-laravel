@@ -489,7 +489,10 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
         }
 
         // cleanup files that no longer exist in file system and their modifications (in case of images)
-        $newValue = json_decode($valueContainer->getValue(), true) ?: [];
+        $newValue = $valueContainer->getValue();
+        if (is_string($newValue)) {
+            $newValue = json_decode($valueContainer->getValue(), true) ?: [];
+        }
         foreach ($newValue as $filesGroupName => $existingFiles) {
             $indexesToRemove = [];
             $filesGroupConfig = $column->getFilesGroupConfiguration($filesGroupName);

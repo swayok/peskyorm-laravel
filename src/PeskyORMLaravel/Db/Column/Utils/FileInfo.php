@@ -3,12 +3,13 @@
 namespace PeskyORMLaravel\Db\Column\Utils;
 
 use PeskyORM\ORM\RecordInterface;
+use Ramsey\Uuid\Uuid;
 use Swayok\Utils\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileInfo {
 
-    /** @var FileConfig|ImageConfig */
+    /** @var FilesGroupConfig|ImagesGroupConfig */
     protected $fileConfig;
     /** @var int|string */
     protected $record;
@@ -20,56 +21,135 @@ class FileInfo {
     protected $fileSuffix;
     /** @var string */
     protected $fileExtension;
+    /** @var string */
+    protected $uuid;
+    /** @var string */
+    protected $uuidFoDb;
     /** @var array */
     protected $customInfo = [];
+    /** @var null|int */
+    protected $position;
+    /** @var null|string */
+    protected $mime;
+    /** @var null|string */
+    protected $type;
+    /** @var int */
+    static private $autoPositioningCounter = 1;
 
     /**
      * @param array $fileInfo
-     * @param FileConfig|ImageConfig $fileConfig
+     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
      * @param RecordInterface $record
      * @return static
+     * @throws \UnexpectedValueException
      */
-    static public function fromArray(array $fileInfo, FileConfig $fileConfig, RecordInterface $record) {
+    static public function fromArray(array $fileInfo, FilesGroupConfig $fileConfig, RecordInterface $record) {
         /** @var FileInfo $obj */
-        $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix', null));
+        $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix'));
         $obj
-            ->setFileName(array_get($fileInfo, 'name', null))
-            ->setOriginalFileName(array_get($fileInfo, 'original_name', null))
-            ->setFileExtension(array_get($fileInfo, 'extension', null))
-            ->setCustomInfo(array_get($fileInfo, 'info', null));
+            ->setFileName(array_get($fileInfo, 'name'))
+            ->setOriginalFileName(array_get($fileInfo, 'original_name'))
+            ->setFileExtension(array_get($fileInfo, 'extension'))
+            ->setCustomInfo(array_get($fileInfo, 'info'))
+            ->setUuid(array_get($fileInfo, 'uuid', function () use ($obj) {
+                return $obj->makeTempUuid();
+            }));
+        if (array_has($fileInfo, 'position')) {
+            $obj->setPosition($fileInfo['position']);
+        }
+        if (array_has($fileInfo, 'mime')) {
+            $obj->setMimeType($fileInfo['mime']);
+        }
+        if (array_has($fileInfo, 'type')) {
+            $obj->setFileType($fileInfo['type']);
+        }
         return $obj;
     }
 
     /**
      * @param \SplFileInfo $fileInfo
-     * @param FileConfig|ImageConfig $fileConfig
+     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
      * @param RecordInterface $record
      * @param null|int $fileSuffix
      * @return static
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
-    static public function fromSplFileInfo(\SplFileInfo $fileInfo, FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    static public function fromSplFileInfo(\SplFileInfo $fileInfo, FilesGroupConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
         $obj = new static($fileConfig, $record, $fileSuffix);
-        if ($fileInfo instanceof UploadedFile) {
-            $extension = $fileInfo->getClientOriginalExtension();
-            $fileName = $fileInfo->getClientOriginalName();
-        } else {
-            $extension = $fileInfo->getExtension();
-            $fileName = $fileInfo->getFilename();
+        if (!($fileInfo instanceof UploadedFile)) {
+            $fileInfo = new UploadedFile($fileInfo->getRealPath(), $fileInfo->getFilename(), null, $fileInfo->getSize(), null, true);
         }
-        $obj->setFileExtension($extension);
-        $obj->setOriginalFileName(preg_replace("%\.{$extension}$%", '', $fileName));
+
+        $extension = $fileInfo->getClientOriginalExtension();
+        $obj
+            ->setFileExtension($extension)
+            ->setOriginalFileName(preg_replace("%\.{$extension}$%", '', $fileInfo->getClientOriginalName()))
+            ->setMimeType(static::detectMimeType($fileInfo))
+            ->setUuid($obj->makeUuid());
         return $obj;
     }
 
     /**
-     * @param FileConfig $fileConfig
+     * @param FilesGroupConfig $fileConfig
      * @param RecordInterface $record
      * @param null|int $fileSuffix
      */
-    protected function __construct(FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    protected function __construct(FilesGroupConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
         $this->fileConfig = $fileConfig;
         $this->record = $record;
         $this->fileSuffix = $fileSuffix;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUuid() {
+        return $this->uuid;
+    }
+
+    /**
+     * Get UUID to be saved to DB
+     * Unlike getUuid() this method will never return 'temporary UUID' for cases when UUID was not provided
+     * during object creation via static::fromArray() method
+     * @return string
+     */
+    protected function getUuidForDb() {
+        if (empty($this->uuidFoDb)) {
+            $this->uuidFoDb = $this->isTempUuid() ? $this->makeUuid() : $this->getUuid();
+        }
+        return $this->uuidFoDb;
+    }
+
+    /**
+     * @return string
+     */
+    protected function makeUuid() {
+        return Uuid::uuid4()->getHex();
+    }
+
+    /**
+     * @return string
+     * @throws \UnexpectedValueException
+     */
+    protected function makeTempUuid() {
+        return 'hash:' . sha1($this->getAbsoluteFilePath() . $this->getOriginalFileNameWithExtension());
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isTempUuid() {
+        return stripos($this->getUuid(), 'hash:') === 0;
+    }
+
+    /**
+     * @param string $uuid
+     * @return $this
+     */
+    protected function setUuid($uuid) {
+        $this->uuid = $uuid;
+        return $this;
     }
 
     /**
@@ -170,6 +250,80 @@ class FileInfo {
     }
 
     /**
+     * @param int $position
+     * @return $this
+     */
+    public function setPosition($position) {
+        $this->position = (int)$position;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPosition() {
+        if ($this->position === null) {
+            $this->position = time() + static::$autoPositioningCounter;
+            static::$autoPositioningCounter++;
+        }
+        return $this->position;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMimeType(): string {
+        if (!$this->mime) {
+            $this->mime = static::detectMimeType($this->getAbsoluteFilePath()) ?: 'application/octet-stream';
+        }
+        return $this->mime;
+    }
+
+    /**
+     * @param null|string $mime
+     * @return $this
+     */
+    protected function setMimeType($mime) {
+        $this->mime = $mime;
+        return $this;
+    }
+
+    /**
+     * @param string|\SplFileInfo|UploadedFile $file
+     * @return null|string
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
+     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
+     */
+    static public function detectMimeType($file) {
+        if ($file instanceof UploadedFile) {
+            return $file->getMimeType() ?: $file->getClientMimeType();
+        } else if ($file instanceof \SplFileInfo) {
+            $file = $file->getRealPath();
+        }
+        $file = new UploadedFile($file, 'temp.file', null, null, null, true);
+        return $file->getMimeType();
+    }
+
+    /**
+     * @return string
+     */
+    public function getFileType() {
+        if (!$this->type) {
+            $this->type = FilesGroupConfig::detectFileTypeByMimeType($this->getMimeType());
+        }
+        return $this->type;
+    }
+
+    /**
+     * @param $type
+     * @return $this
+     */
+    protected function setFileType($type) {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
      * @param string|array $customInfo
      * @return $this
      */
@@ -216,6 +370,14 @@ class FileInfo {
     }
 
     /**
+     * @return int
+     * @throws \UnexpectedValueException
+     */
+    public function getSize() {
+        return $this->exists() ? filesize($this->getAbsoluteFilePath()) : 0;
+    }
+
+    /**
      * @param ImageModificationConfig $modificationConfig
      * @return FileInfo;
      * @throws \UnexpectedValueException
@@ -223,7 +385,7 @@ class FileInfo {
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
      */
     public function getModifiedImage(ImageModificationConfig $modificationConfig) {
-        if (!$this->fileConfig instanceof ImageConfig) {
+        if (!$this->fileConfig instanceof ImagesGroupConfig) {
             throw new \BadMethodCallException('Cannot modify files except images');
         }
         return FileInfo::fromSplFileInfo(
@@ -239,6 +401,7 @@ class FileInfo {
 
     /**
      * @return \SplFileInfo
+     * @throws \UnexpectedValueException
      */
     public function getSplFileInfo() {
         return new \SplFileInfo($this->getAbsoluteFilePath());
@@ -255,7 +418,11 @@ class FileInfo {
             'name' => $this->getFileName(), //< file name with suffix but without extension
             'extension' => $this->getFileExtension(),
             'suffix' => $this->getFileSuffix(),
-            'info' => $this->getCustomInfo()
+            'info' => $this->getCustomInfo(),
+            'uuid' => $this->getUuidForDb(),
+            'position' => $this->getPosition(),
+            'mime' => $this->getMimeType(),
+            'type' => $this->getFileType()
         ];
     }
 

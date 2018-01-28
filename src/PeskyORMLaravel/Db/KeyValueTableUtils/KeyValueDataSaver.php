@@ -28,30 +28,32 @@ class KeyValueDataSaver extends Record {
 
     /**
      * @param KeyValueTableInterface $table
-     * @param array $data
+     * @param array $originalData
+     * @param array $newData
      * @param mixed $fkValue
      * @param array $constantAdditionalData
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \PeskyORM\Exception\InvalidDataException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \UnexpectedValueException
      * @throws \PeskyORM\Exception\DbException
+     * @throws \PDOException
+     * @throws \UnexpectedValueException
+     * @throws \InvalidArgumentException
+     * @throws \BadMethodCallException
+     * @throws \PeskyORM\Exception\InvalidDataException
      * @throws \PeskyORM\Exception\InvalidTableColumnConfigException
+     * @throws \PeskyORM\Exception\OrmException
      */
     static public function saveKeyValuePairs(
         KeyValueTableInterface $table,
-        array $data,
+        array $originalData,
+        array $newData,
         $fkValue = null,
-        $constantAdditionalData = []
+        array $constantAdditionalData = []
     ) {
         /** @var array|Column[] $columns */
         $columns = [
             'fakeid' => Column::TYPE_INT
         ];
         $tableStructure = $table->getTableStructure();
-        foreach ($data as $key => $value) {
+        foreach ($newData as $key => $value) {
             if ($tableStructure::hasColumn($key)) {
                 $columns[$key] = $tableStructure::getColumn($key);
             } else {
@@ -70,10 +72,10 @@ class KeyValueDataSaver extends Record {
             "public function getMainForeignKeyColumnName() {return {$fkName};}"
         );
         static::$table->getTableStructure()->markColumnAsPrimaryKey('fakeid');
-        static::new1()
+        static::fromArray($originalData, true, false)
             ->updateValue(static::getPrimaryKeyColumnName(), 0, true)
-            ->updateValues($data, false)
-            ->saveToDb(array_keys($data), $fkValue, $constantAdditionalData);
+            ->updateValues($newData, false)
+            ->saveToDb(array_keys($newData), $fkValue, $constantAdditionalData);
     }
 
     /**
@@ -89,7 +91,7 @@ class KeyValueDataSaver extends Record {
      * @throws \PeskyORM\Exception\OrmException
      * @throws \UnexpectedValueException
      */
-    protected function saveToDb(array $columnsToSave = [], $fkValue = null, $constantAdditionalData = []) {
+    protected function saveToDb(array $columnsToSave = [], $fkValue = null, array $constantAdditionalData = []) {
         $this->_fkValue = $fkValue;
         $this->_constantAdditionalData = $constantAdditionalData;
         parent::saveToDb($columnsToSave);
@@ -136,6 +138,14 @@ class KeyValueDataSaver extends Record {
 
     protected function getAllColumnsWithUpdatableValues() {
         return array_keys(static::getColumns());
+    }
+
+    public function existsInDb($useDbQuery = false) {
+        return true;
+    }
+
+    protected function _existsInDb() {
+        return true;
     }
 
 }

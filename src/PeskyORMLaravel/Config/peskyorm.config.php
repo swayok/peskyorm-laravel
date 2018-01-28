@@ -39,7 +39,15 @@ return [
         \PeskyORMLaravel\Db\TableStructureTraits\PasswordColumn::class,        // password
         \PeskyORMLaravel\Db\TableStructureTraits\TimestampColumns::class,      // created_at and updated_at
         \PeskyORMLaravel\Db\TableStructureTraits\CreatedAtColumn::class,       // created_at
-        \PeskyORMLaravel\Db\TableStructureTraits\PositionColumn::class,       // position
-    ]
+        \PeskyORMLaravel\Db\TableStructureTraits\PositionColumn::class,        // position
+    ],
 
+    /**
+     * Class that wraps PDO instance in order to modify something or collect some data
+     * By default there are 2 options:
+     * 1. \PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer::class - used to provide data for DebugBar library
+     * 2. \PeskyORM\Profiling\TraceablePDO::class - native PeskyORM wrapper that collects stats about
+     *    query execution and stores it into \PeskyORM\Profiling\PeskyOrmPdoProfiler
+     */
+    'pdo_wrapper' => null,
 ];

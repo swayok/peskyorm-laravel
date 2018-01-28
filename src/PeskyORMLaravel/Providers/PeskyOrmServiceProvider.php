@@ -36,21 +36,32 @@ class PeskyOrmServiceProvider extends ServiceProvider {
     }
 
     protected function addPdoCollectorForDebugbar() {
-        if (config('app.debug', false) && app()->offsetExists('debugbar') && debugbar()->isEnabled()) {
-            $timeCollector = debugbar()->hasCollector('time') ? debugbar()->getCollector('time') : null;
-            $pdoCollector = new DebugBar\DataCollector\PDO\PDOCollector(null, $timeCollector);
-            $pdoCollector->setRenderSqlWithParams(true);
-            debugbar()->addCollector($pdoCollector);
-            DbAdapter::setConnectionWrapper(function (DbAdapterInterface $adapter, \PDO $pdo) {
-                $pdoTracer = new \PeskyORMLaravel\PeskyOrmPdoTracer($pdo);
-                if (debugbar()->hasCollector('pdo')) {
-                    debugbar()->getCollector('pdo')->addConnection(
-                        $pdoTracer,
-                        $adapter->getConnectionConfig()->getDbName()
-                    );
+        $pdoWrapper = config('peskyorm.pdo_wrapper');
+        if ($pdoWrapper) {
+            if ($pdoWrapper instanceof \PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer) {
+                if (app()->offsetExists('debugbar') && debugbar()->isEnabled()) {
+                    $timeCollector = debugbar()->hasCollector('time') ? debugbar()->getCollector('time') : null;
+                    $pdoCollector = new DebugBar\DataCollector\PDO\PDOCollector(null, $timeCollector);
+                    $pdoCollector->setRenderSqlWithParams(true);
+                    debugbar()->addCollector($pdoCollector);
+                    DbAdapter::setConnectionWrapper(function (DbAdapterInterface $adapter, \PDO $pdo) {
+                        $pdoTracer = new \PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer($pdo);
+                        if (debugbar()->hasCollector('pdo')) {
+                            debugbar()->getCollector('pdo')->addConnection(
+                                $pdoTracer,
+                                $adapter->getConnectionConfig()->getDbName()
+                            );
+                        }
+
+                        return $pdoTracer;
+                    });
                 }
-                return $pdoTracer;
-            });
+            } else {
+                DbAdapter::setConnectionWrapper(function (DbAdapterInterface $adapter, \PDO $pdo) use ($pdoWrapper) {
+                    $name = $adapter->getConnectionConfig()->getName() . ' (DB: ' . $adapter->getConnectionConfig()->getDbName() . ')';
+                    return new $pdoWrapper($pdo, $name);
+                });
+            }
         }
     }
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace PeskyORMLaravel;
+namespace PeskyORMLaravel\Profiling;
 
 use DebugBar\DataCollector\PDO\TraceablePDO;
 
-class PeskyOrmPdoTracer extends TraceablePDO {
+class PeskyOrmDebugBarPdoTracer extends TraceablePDO {
 
     protected function profileCall($method, $sql, array $args) {
         if (!preg_match('%^(COMMIT|BEGIN)%i', $sql)) {

@@ -16,6 +16,7 @@ class PeskyOrmServiceProvider extends ServiceProvider {
     ];
 
     public function boot() {
+        $this->mergeConfigFrom($this->getConfigFilePath(), 'peskyorm');
         $connections = config('database.connections');
         $default = config('database.default');
         if (is_array($connections)) {
@@ -66,8 +67,6 @@ class PeskyOrmServiceProvider extends ServiceProvider {
     }
 
     public function register() {
-        $this->mergeConfigFrom($this->getConfigFilePath(), 'peskyorm');
-
         \Auth::provider('peskyorm', function($app, $config) {
             return new PeskyOrmUserProvider(array_get($config, 'model'));
         });

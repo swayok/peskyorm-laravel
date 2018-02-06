@@ -73,7 +73,7 @@ class KeyValueDataSaver extends Record {
         );
         static::$table->getTableStructure()->markColumnAsPrimaryKey('fakeid');
         static::fromArray($originalData, true, false)
-            ->updateValue(static::getPrimaryKeyColumnName(), 0, true)
+            ->updateValue(static::getPrimaryKeyColumn(), 0, true)
             ->updateValues($newData, false)
             ->saveToDb(array_keys($newData), $fkValue, $constantAdditionalData);
     }
@@ -144,7 +144,7 @@ class KeyValueDataSaver extends Record {
         return true;
     }
 
-    protected function _existsInDb() {
+    protected function _existsInDbViaQuery() {
         return true;
     }
 

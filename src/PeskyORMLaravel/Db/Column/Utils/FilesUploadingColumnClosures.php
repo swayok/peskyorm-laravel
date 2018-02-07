@@ -308,21 +308,16 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * Validates value. Uses valueValidatorExtender
-     * @param RecordValue|mixed $value
+     * @param mixed $value
      * @param bool $isFromDb
      * @param Column|ImagesColumn|FilesColumn $column
      * @return array
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \PDOException
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
      */
     static public function valueValidator($value, $isFromDb, Column $column) {
-        if ($value instanceof RecordValue) {
-            $value = $value->getValue();
-        }
         if ($isFromDb || is_string($value)) {
             return parent::valueValidator($value, $isFromDb, $column);
         }
@@ -458,7 +453,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param bool $isUpdate
      * @param array $savedData
      * @return void
-     * @throws \PeskyORM\Exception\RecordNotFoundException
      * @throws \PeskyORM\Exception\InvalidTableColumnConfigException
      * @throws \PeskyORM\Exception\InvalidDataException
      * @throws \PeskyORM\Exception\DbException
@@ -643,7 +637,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param bool $deleteFiles
      * @return void
      * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
      */
@@ -666,7 +659,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @param string $format
      * @return mixed
-     * @throws \PeskyORM\Exception\OrmException
      * @throws \BadMethodCallException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException

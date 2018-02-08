@@ -20,16 +20,20 @@ class PeskyOrmServiceProvider extends ServiceProvider {
         $connections = config('database.connections');
         $default = config('database.default');
         if (is_array($connections)) {
-            foreach ($connections as $name => $connectionConfig) {
-                if (
-                    in_array(strtolower(array_get($connectionConfig, 'driver', '')), static::$drivers)
-                    && !empty($connectionConfig['password'])
-                ) {
-                    DbConnectionsManager::createConnectionFromArray($name, $connectionConfig);
-                    if ($name === $default) {
-                        DbConnectionsManager::addAlternativeNameForConnection($name, 'default');
+            try {
+                foreach ($connections as $name => $connectionConfig) {
+                    if (
+                        in_array(strtolower(array_get($connectionConfig, 'driver', '')), static::$drivers)
+                        && !empty($connectionConfig['password'])
+                    ) {
+                        DbConnectionsManager::createConnectionFromArray($name, $connectionConfig, $this->app->runningInConsole());
+                        if ($name === $default) {
+                            DbConnectionsManager::addAlternativeNameForConnection($name, 'default', $this->app->runningInConsole());
+                        }
                     }
                 }
+            } catch (\InvalidArgumentException $exception) {
+
             }
         }
         $this->configurePublishes();

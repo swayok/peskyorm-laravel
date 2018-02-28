@@ -9,7 +9,7 @@ use PeskyORM\ORM\Record;
 use PeskyORM\ORM\Table;
 use PeskyORM\ORM\TableStructure;
 
-class OrmMakeDbClasses extends Command {
+class OrmMakeDbClassesCommand extends Command {
 
     /**
      * The name and signature of the console command.

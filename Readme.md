@@ -18,7 +18,7 @@ This will also register:
             ]
         ]
 
-- `\PeskyORMLaravel\Console\Commands\OrmMakeDbClasses` Command (`php artisan orm:make-db-classes`) - generates DB classes by table name
+- `\PeskyORMLaravel\Console\Commands\OrmMakeDbClassesCommand` Command (`php artisan orm:make-db-classes`) - generates DB classes by table name
 - If you have DebugBar package enabled - it will be configured to display queries executed by PeskyOrm adapters (only if this functionality is enabled in DebugBar)
 
 **Publish config using artisan**

@@ -6,7 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use PeskyORM\Core\DbAdapter;
 use PeskyORM\Core\DbAdapterInterface;
 use PeskyORM\Core\DbConnectionsManager;
-use PeskyORMLaravel\Console\Commands\OrmMakeDbClasses;
+use PeskyORMLaravel\Console\Commands\OrmGenerateMigrationCommand;
+use PeskyORMLaravel\Console\Commands\OrmMakeDbClassesCommand;
 
 class PeskyOrmServiceProvider extends ServiceProvider {
 
@@ -102,8 +103,13 @@ class PeskyOrmServiceProvider extends ServiceProvider {
 
     protected function registerCommands() {
         $this->app->singleton('command.orm.make-db-classes', function() {
-            return new OrmMakeDbClasses();
+            return new OrmMakeDbClassesCommand();
         });
         $this->commands('command.orm.make-db-classes');
+
+        $this->app->singleton('command.orm.generate-migration', function() {
+            return new OrmGenerateMigrationCommand($this->app['composer']);
+        });
+        $this->commands('command.orm.generate-migration');
     }
 }

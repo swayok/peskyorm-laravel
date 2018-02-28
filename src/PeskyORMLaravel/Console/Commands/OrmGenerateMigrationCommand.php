@@ -176,7 +176,8 @@ class OrmGenerateMigrationCommand extends BaseCommand {
         $default = $columnDescription->getDefault();
         if ($default !== null) {
             if ($default instanceof DbExpr) {
-                $column[] = "    ->default(\PeskyORM\Core\DbExpr::create('{$default->setWrapInBrackets(false)->get()}'))";
+                $default = $default->setWrapInBrackets(false)->get();
+                $column[] = "    ->default(\DB::raw('{$default}'))";
             } else if (is_string($default)) {
                 $column[] = "    ->default('{$default}')";
             } else if (is_bool($default)) {

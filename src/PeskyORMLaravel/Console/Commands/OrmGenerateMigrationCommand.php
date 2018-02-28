@@ -207,7 +207,14 @@ class OrmGenerateMigrationCommand extends BaseCommand {
                         return "\$table->integer('{$columnDescription->getName()}')";
                 }
             case Column::TYPE_FLOAT:
-                return "\$table->float('{$columnDescription->getName()}', {$columnDescription->getLimit()}, {$columnDescription->getNumberPrecision()})";
+                if ($columnDescription->getNumberPrecision()) {
+                    // this is very important in case of postgresql because float() ignores limit and precision:
+                    // see Illuminate\Database\Schema\Grammars\PostgresGrammar::typeFloat - it generates 'double precision'
+                    // while we need 'decimal(limit, precision)' or 'numeric(limit, precision)'
+                    return "\$table->decimal('{$columnDescription->getName()}', {$columnDescription->getLimit()}, {$columnDescription->getNumberPrecision()})";
+                } else {
+                    return "\$table->float('{$columnDescription->getName()}', {$columnDescription->getLimit()})";
+                }
             case Column::TYPE_BOOL:
                 return "\$table->boolean('{$columnDescription->getName()}')";
             case Column::TYPE_TEXT:

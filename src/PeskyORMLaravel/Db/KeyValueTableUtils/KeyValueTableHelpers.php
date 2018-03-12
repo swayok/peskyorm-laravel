@@ -257,7 +257,10 @@ trait KeyValueTableHelpers {
     static public function getValue($key, $foreignKeyValue = null, $default = null, $ignoreEmptyValue = false) {
         $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
         if (!empty($cacheKey)) {
-            return array_get(self::getValuesForForeignKey($foreignKeyValue), $key, $default);
+            $value = array_get(self::getValuesForForeignKey($foreignKeyValue), $key, $default);
+            return $ignoreEmptyValue && static::isEmptyValue($value)
+                ? value($default)
+                : $value;
         }
         $conditions = [
             static::getKeysColumnName() => $key

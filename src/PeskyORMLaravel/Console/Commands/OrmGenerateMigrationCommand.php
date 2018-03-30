@@ -43,13 +43,17 @@ class OrmGenerateMigrationCommand extends BaseCommand {
     public function handle() {
         $connectionName = $this->option('connection');
         if (!empty($connectionName)) {
-            $connectionInfo = config('database.connections.' . $connectionName);
-            if (!is_array($connectionInfo)) {
-                $this->error("There is no configuration info for connection '{$connectionName}'");
+            if (DbConnectionsManager::hasConnection($connectionName)) {
+                $connection = DbConnectionsManager::getConnection($connectionName);
+            } else {
+                $connectionInfo = config('database.connections.' . $connectionName);
+                if (!is_array($connectionInfo)) {
+                    $this->error("There is no configuration info for connection '{$connectionName}'");
 
-                return;
+                    return;
+                }
+                $connection = DbConnectionsManager::createConnectionFromArray($connectionName, $connectionInfo);
             }
-            $connection = DbConnectionsManager::createConnectionFromArray($connectionName, $connectionInfo);
         } else {
             $connection = DbConnectionsManager::getConnection('default');
         }

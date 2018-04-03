@@ -118,16 +118,33 @@ abstract class MimeTypesHelper {
         self::GZIP => self::TYPE_ARCHIVE,
     ];
 
+    /**
+     * @return array
+     */
     static public function getMimeTypesAliases() {
         return static::$mimeTypesAliases;
     }
 
+    /**
+     * @return array
+     */
     static public function getMimeTypesToFileTypes() {
         return static::$mimeTypeToFileType;
     }
 
+    /**
+     * @return array
+     */
     static public function getMimeTypesToFileExtensions() {
         return static::$mimeToExt;
+    }
+
+    /**
+     * @param string $mimeType
+     * @return string|null
+     */
+    static public function getExtensionForMimeType($mimeType) {
+        return isset(static::$mimeToExt[$mimeType]) ? static::$mimeToExt[$mimeType] : null;
     }
 
     /**

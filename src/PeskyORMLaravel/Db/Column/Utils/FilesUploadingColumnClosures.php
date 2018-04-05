@@ -667,6 +667,8 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
         /** @var FilesColumn $column */
         $column = $valueContainer->getColumn();
         if ($column->hasFilesGroupConfiguration($format)) {
+            // colname_as_$groupName where $groupName === $format
+            // returns FileInfo[]
             return $valueContainer->getCustomInfo(
                 'file_info:' . $format,
                 function () use ($valueContainer, $format, $column) {
@@ -693,6 +695,8 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
                 true
             );
         } else if ($format === 'file_info_arrays') {
+            // colname_as_file_info_arrays
+            // returns ['group_name1' => FileInfo[], 'group_name2' => FileInfo[]]
             return $valueContainer->getCustomInfo(
                 'file_info:all',
                 function () use ($valueContainer, $column) {
@@ -706,6 +710,8 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
                 true
             );
         } else if (in_array($format, ['urls', 'urls_with_timestamp', 'paths'], true)) {
+            // colname_as_urls / colname_as_urls_with_timestamp / colname_as_paths
+            // returns array of strings
             return $valueContainer->getCustomInfo(
                 'format:' . $format,
                 function () use ($valueContainer, $format, $column) {

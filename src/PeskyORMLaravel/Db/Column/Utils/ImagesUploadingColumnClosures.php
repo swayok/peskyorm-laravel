@@ -3,8 +3,6 @@
 namespace PeskyORMLaravel\Db\Column\Utils;
 
 use PeskyORM\ORM\Column;
-use PeskyORM\ORM\RecordInterface;
-use PeskyORM\ORM\RecordValue;
 use PeskyORM\ORM\RecordValueHelpers;
 use PeskyORMLaravel\Db\Column\ImagesColumn;
 use Swayok\Utils\ValidateValue;
@@ -20,6 +18,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      * @param int $fileIndex
      * @param array $errors
      * @return bool
+     * @throws \ImagickException
      */
     static protected function validateUploadedFileContents(
         Column $column,
@@ -79,6 +78,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      * @param FileInfo $fileInfo
      * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
      * @throws \UnexpectedValueException
+     * @throws \ImagickException
      */
     static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FilesGroupConfig $fileConfig) {
         // modify image size if needed

@@ -80,7 +80,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @return $this
      */
     public function setRelativeUploadsFolderPath($folder) {
-        $this->relativeUploadsFolderPath = static::normalizeFolderPath($folder);
+        $this->relativeUploadsFolderPath = $folder instanceof \Closure ? $folder : static::normalizeFolderPath($folder);
         return $this;
     }
 
@@ -91,7 +91,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      */
     protected function getRelativeUploadsFolderPath(RecordInterface $record, FilesGroupConfig $fileConfig) {
         if ($this->relativeUploadsFolderPath instanceof \Closure) {
-            return call_user_func($this->relativeUploadsFolderPath, $record, $fileConfig);
+            return static::normalizeFolderPath(call_user_func($this->relativeUploadsFolderPath, $record, $fileConfig));
         } else {
             return $this->buildRelativeUploadsFolderPathForRecordAndFileConfig($record, $fileConfig);
         }

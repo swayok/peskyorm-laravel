@@ -261,6 +261,10 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
         foreach ($uploadedFiles as $idx => $fileUploadInfo) {
             if (!ValidateValue::isInteger($idx)) {
                 continue; //< this is not expected here -> ignore
+            } else if ($fileUploadInfo instanceof \SplFileInfo) {
+                $normailzedData[] = [
+                    'file' => $fileUploadInfo
+                ];
             } else if (static::isFileInfoArray($fileUploadInfo)) {
                 // file info array is being saved to DB via static::valueSavingExtender() or manually
                 unset($fileUploadInfo['deleted']);
@@ -578,6 +582,9 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
         if ($fileConfig->getMaxFilesCount() === 1) {
             \File::cleanDirectory($dir);
         }
+        if (!\File::isDirectory($dir)) {
+            \File::makeDirectory($dir, 0777, true);
+        }
         $filesSaved = 0;
         foreach ($fileUploads as $uploadInfo) {
             $file = array_get($uploadInfo, 'file', false);
@@ -587,11 +594,16 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
                 $fileInfo->setCustomInfo(array_get($uploadInfo, 'info', []));
                 $filesSaved++;
                 // save not modified file to $dir
+                $filePath = $file->getRealPath();
                 if ($file instanceof SymfonyUploadedFile) {
-                    $file->move($dir, $fileInfo->getFileNameWithExtension());
+                    if (is_uploaded_file($filePath)) {
+                        $file->move($dir, $fileInfo->getFileNameWithExtension());
+                    } else {
+                        \File::copy($filePath, $dir . $fileInfo->getFileNameWithExtension());
+                    }
                 } else {
                     /** @var \SplFileInfo $file */
-                    \File::copy($file->getRealPath(), $dir . $fileInfo->getFileNameWithExtension());
+                    \File::copy($filePath, $dir . $fileInfo->getFileNameWithExtension());
                 }
                 // modify file
                 static::modifyUploadedFileAfterSaveToFs($fileInfo, $fileConfig);

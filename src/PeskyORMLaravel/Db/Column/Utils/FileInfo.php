@@ -379,16 +379,17 @@ class FileInfo {
 
     /**
      * @param ImageModificationConfig $modificationConfig
-     * @return FileInfo;
+     * @return ModifiedImageInfo;
      * @throws \UnexpectedValueException
      * @throws \BadMethodCallException
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
+     * @throws \ImagickException
      */
     public function getModifiedImage(ImageModificationConfig $modificationConfig) {
         if (!$this->fileConfig instanceof ImagesGroupConfig) {
             throw new \BadMethodCallException('Cannot modify files except images');
         }
-        return FileInfo::fromSplFileInfo(
+        return ModifiedImageInfo::fromSplFileInfo(
             $modificationConfig->applyModificationTo(
                 $this->getAbsoluteFilePath(),
                 $this->getAbsolutePathToModifiedImagesFolder()

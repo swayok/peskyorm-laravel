@@ -62,7 +62,7 @@ trait InjectsDbObjects {
      * Abort with HTTP code 404
      */
     protected function sendRecordNotFoundResponse() {
-        abort(404, 'Record not found in DB');
+        abort(404, 'Record not found in DB.');
     }
 
     /**

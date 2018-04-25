@@ -350,7 +350,7 @@ class ImageModificationConfig {
                 // Do nothing for images that already fit both dimensions (no enlarge);
                 if ($imagick->getImageWidth() > $targetWidth || $imagick->getImageHeight() > $targetHeight) {
                     $bestfit = !($targetWidth === 0 || $targetHeight === 0);
-                    $imagick->resizeImage($targetWidth, $targetHeight, \Imagick::FILTER_LANCZOS, 1, $bestfit);
+                    $imagick->resizeImage($targetWidth, $targetHeight, \Imagick::FILTER_LANCZOS, 0.9, $bestfit);
                 }
                 break;
             case static::COVER:
@@ -358,19 +358,16 @@ class ImageModificationConfig {
                 if ($targetWidth === 0 || $targetHeight === 0) {
                     throw new \UnexpectedValueException('Width and height must be specified for \'cover\' fitting');
                 }
-                $vAlign = $this->getVerticalAlign();
-                $hAlign = $this->getHorizontalAlign();
-                if ($vAlign === static::CENTER && $hAlign === static::CENTER) {
-                    $imagick->cropThumbnailImage($targetWidth, $targetHeight);
+                if ($imagick->getImageWidth() > $imagick->getImageHeight()) {
+                    $resizeWidth = $imagick->getImageWidth() * $targetHeight / $imagick->getImageHeight();
+                    $resizeHeight = $targetHeight;
                 } else {
-                    if ($targetWidth > $targetHeight) {
-                        $imagick->resizeImage($targetWidth, 0, \Imagick::FILTER_LANCZOS, 1);
-                    } else {
-                        $imagick->resizeImage(0, $targetHeight, \Imagick::FILTER_LANCZOS, 1);
-                    }
-                    list($offsetX, $offsetY) = $this->calculateOffsets($imagick, $targetWidth, $targetHeight);
-                    $imagick->cropImage($targetWidth, $targetHeight, abs($offsetX), abs($offsetY));
+                    $resizeWidth = $targetWidth;
+                    $resizeHeight = $imagick->getImageHeight() * $targetWidth / $imagick->getImageWidth();
                 }
+                $imagick->resizeImage($resizeWidth, $resizeHeight, \Imagick::FILTER_LANCZOS, 0.9);
+                list($offsetX, $offsetY) = $this->calculateOffsets($imagick, $targetWidth, $targetHeight);
+                $imagick->cropImage($targetWidth, $targetHeight, abs($offsetX), abs($offsetY));
                 break;
             case static::CONTAIN:
                 // Resize image to fit both dimensions + enlarge it if needed (same as css background-size: contain)
@@ -379,7 +376,7 @@ class ImageModificationConfig {
                 $resizeHeight = $targetHeight;
                 if ($targetHeight !== 0 && $targetWidth !== 0) {
                     $resized = $imagick;
-                    $resized->resizeImage($resizeWidth, $resizeHeight, \Imagick::FILTER_LANCZOS, 1, true);
+                    $resized->resizeImage($resizeWidth, $resizeHeight, \Imagick::FILTER_LANCZOS, 0.9, true);
                     $imagick = new \Imagick();
                     $imagick->newImage(
                         $targetWidth,
@@ -391,7 +388,7 @@ class ImageModificationConfig {
                     $resized->destroy();
                 } else {
                     // target width or height is 0 - just resize image with best fit (downsize or enlarge)
-                    $imagick->resizeImage($targetWidth, $targetHeight, \Imagick::FILTER_LANCZOS, 1, false);
+                    $imagick->resizeImage($targetWidth, $targetHeight, \Imagick::FILTER_LANCZOS, 0.9, false);
                 }
                 break;
         }

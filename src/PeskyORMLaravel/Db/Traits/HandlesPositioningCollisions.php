@@ -27,7 +27,7 @@ trait HandlesPositioningCollisions {
         return [];
     }
 
-    protected function afterSave($isCreated) {
+    protected function afterSave($isCreated, array $updatedColumns = []) {
         $this->finishPositioningCollision();
     }
 

@@ -259,6 +259,7 @@ class ImageModificationConfig {
      * Change image type
      * @param $mimeType - ImageModificationConfig::SAME_AS_ORIGINAL, ImageModificationConfig::PNG,
      * ImageModificationConfig::JPEG, ImageModificationConfig::GIF, ImageModificationConfig::SVG
+     * @return ImageModificationConfig
      * @throws \InvalidArgumentException
      */
     public function setImageType($mimeType) {
@@ -266,6 +267,7 @@ class ImageModificationConfig {
             throw new \InvalidArgumentException("\$mimeType '{$mimeType}' is not supported");
         }
         $this->alterImageType = $mimeType;
+        return $this;
     }
 
     /**

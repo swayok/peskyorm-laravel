@@ -72,7 +72,7 @@ class OrmMakeDbClassesCommand extends Command {
             $connection = DbConnectionsManager::getConnection('default');
         }
         $tableName = $this->argument('table_name');
-        $schemaName = $this->argument('schema');
+        $schemaName = $this->argument('schema') ?: $connection->getConnectionConfig()->getDefaultSchemaName();
         if (
             !$connection->hasTable($tableName, $schemaName)
             && !$this->confirm("Table {$schemaName}.{$tableName} does not exist. Continue?", true)

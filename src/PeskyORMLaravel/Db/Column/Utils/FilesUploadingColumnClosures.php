@@ -760,4 +760,25 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
             return parent::valueFormatter($valueContainer, $format);
         }
     }
+
+    /**
+     * @param FilesColumn|Column $column
+     * @return array
+     */
+    public static function getValueFormats(Column $column) {
+        $defaultFormats = parent::getValueFormats($column);
+        $formats = [];
+        if ($column instanceof FilesColumn) {
+            $formats = [
+                'file_info_arrays',
+                'urls',
+                'urls_with_timestamp',
+                'paths'
+            ];
+            foreach ($column->getFilesGroupsConfigurations() as $groupName => $_) {
+                $formats[] = $groupName;
+            }
+        }
+        return array_unique(array_merge($defaultFormats, $formats));
+    }
 }

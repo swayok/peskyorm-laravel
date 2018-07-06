@@ -15,14 +15,19 @@ class PeskyOrmUserProvider implements UserProvider {
      * @var string
      */
     protected $dbRecordClass;
+    /**
+     * @var array
+     */
+    protected $relationsToFetch = [];
 
     /**
      * Create a new database user provider.
      *
-     * @param  string $dbRecordClass
+     * @param string $dbRecordClass
+     * @param array $relationsToFetch
      * @throws \InvalidArgumentException
      */
-    public function __construct($dbRecordClass) {
+    public function __construct($dbRecordClass, array $relationsToFetch = []) {
         if (empty($dbRecordClass) || !class_exists($dbRecordClass)) {
             throw new \InvalidArgumentException(
                 'Argument $dbRecordClass must contin a class name that implements PeskyORM\ORM\RecordInterface'
@@ -34,7 +39,7 @@ class PeskyOrmUserProvider implements UserProvider {
     /**
      * Retrieve a user by their unique identifier.
      *
-     * @param  mixed $identifier
+     * @param mixed $identifier
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
     public function retrieveById($identifier) {
@@ -42,7 +47,8 @@ class PeskyOrmUserProvider implements UserProvider {
             return null;
         }
         /** @var RecordInterface $user */
-        $user = $this->createEmptyUserRecord()->fromPrimaryKey($identifier);
+        $user = $this->createEmptyUserRecord()->fromPrimaryKey($identifier, [], $this->getRelationsToFetch());
+
         return $this->validateUser($user, null);
     }
 
@@ -59,8 +65,9 @@ class PeskyOrmUserProvider implements UserProvider {
         /** @var RecordInterface $user */
         $user = $dbObject->fromDb([
             $dbObject->getAuthIdentifierName() => $identifier,
-            $dbObject->getRememberTokenName() => $token
+            $dbObject->getRememberTokenName() => $token,
         ]);
+
         return $this->validateUser($user, null);
     }
 
@@ -77,6 +84,7 @@ class PeskyOrmUserProvider implements UserProvider {
         ) {
             return $user;
         }
+
         return $onFailReturn;
     }
 
@@ -102,7 +110,7 @@ class PeskyOrmUserProvider implements UserProvider {
      */
     public function retrieveByCredentials(array $credentials) {
 
-        $conditions = array();
+        $conditions = [];
 
         foreach ($credentials as $key => $value) {
             if (!str_contains($key, 'password')) {
@@ -133,6 +141,7 @@ class PeskyOrmUserProvider implements UserProvider {
                 }
             }
         }
+
         return true;
     }
 
@@ -144,6 +153,7 @@ class PeskyOrmUserProvider implements UserProvider {
     public function createEmptyUserRecord() {
         /** @var RecordInterface $class */
         $class = $this->dbRecordClass;
+
         return new $class();
     }
 
@@ -154,5 +164,13 @@ class PeskyOrmUserProvider implements UserProvider {
      */
     public function getModel() {
         return $this->dbRecordClass;
+    }
+
+    /**
+     * Related records to read together with main record
+     * @return array
+     */
+    public function getRelationsToFetch() {
+        return $this->relationsToFetch;
     }
 }

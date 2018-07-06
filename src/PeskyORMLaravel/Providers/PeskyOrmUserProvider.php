@@ -34,6 +34,7 @@ class PeskyOrmUserProvider implements UserProvider {
             );
         }
         $this->dbRecordClass = $dbRecordClass;
+        $this->relationsToFetch = $relationsToFetch;
     }
 
     /**
@@ -66,7 +67,7 @@ class PeskyOrmUserProvider implements UserProvider {
         $user = $dbObject->fromDb([
             $dbObject->getAuthIdentifierName() => $identifier,
             $dbObject->getRememberTokenName() => $token,
-        ]);
+        ], [], $this->getRelationsToFetch());
 
         return $this->validateUser($user, null);
     }
@@ -117,7 +118,7 @@ class PeskyOrmUserProvider implements UserProvider {
                 $conditions[$key] = $value;
             }
         }
-        $user = $this->createEmptyUserRecord()->fromDb($conditions);
+        $user = $this->createEmptyUserRecord()->fromDb($conditions, [], $this->getRelationsToFetch());
 
         return $this->validateUser($user, null);
     }

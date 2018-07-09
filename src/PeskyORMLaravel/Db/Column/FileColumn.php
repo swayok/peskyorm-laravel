@@ -63,7 +63,7 @@ class FileColumn extends Column {
             ->convertsEmptyStringToNull()
             ->setDefaultValue('{}');
         if ($relativeUploadsFolderPath) {
-            if (is_string($relativeUploadsFolderPath) && !($relativeUploadsFolderPath instanceof \Closure)) {
+            if (!is_string($relativeUploadsFolderPath) && !($relativeUploadsFolderPath instanceof \Closure)) {
                 throw new \InvalidArgumentException('$relativeUploadsFolderPath argument must be a string or \Closure');
             }
             $this->setRelativeUploadsFolderPath($relativeUploadsFolderPath);

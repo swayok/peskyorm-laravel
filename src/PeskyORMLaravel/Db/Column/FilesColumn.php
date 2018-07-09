@@ -4,6 +4,7 @@ namespace PeskyORMLaravel\Db\Column;
 
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
+use PeskyORMLaravel\Db\Column\Utils\FileConfig;
 use PeskyORMLaravel\Db\Column\Utils\FilesGroupConfig;
 use PeskyORMLaravel\Db\Column\Utils\FilesUploadingColumnClosures;
 use PeskyORMLaravel\Db\Column\Utils\ImagesGroupConfig;
@@ -86,10 +87,10 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param RecordInterface $record
-     * @param FilesGroupConfig $fileConfig
+     * @param FileConfig $fileConfig
      * @return string
      */
-    protected function getRelativeUploadsFolderPath(RecordInterface $record, FilesGroupConfig $fileConfig) {
+    protected function getRelativeUploadsFolderPath(RecordInterface $record, FileConfig $fileConfig) {
         if ($this->relativeUploadsFolderPath instanceof \Closure) {
             return static::normalizeFolderPath(call_user_func($this->relativeUploadsFolderPath, $record, $fileConfig));
         } else {
@@ -99,10 +100,10 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param RecordInterface $record
-     * @param FilesGroupConfig $fileConfig
+     * @param FileConfig $fileConfig
      * @return string
      */
-    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FilesGroupConfig $fileConfig) {
+    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig) {
         $table = $record::getTable();
         if ($table instanceof KeyValueTableInterface) {
             $fkName = $table->getMainForeignKeyColumnName();
@@ -116,19 +117,19 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
 
     /**
      * @param RecordInterface $record
-     * @param FilesGroupConfig $fileConfig
+     * @param FileConfig $fileConfig
      * @return string
      */
-    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FilesGroupConfig $fileConfig) {
+    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FileConfig $fileConfig) {
         return static::normalizeFolderPath(public_path($this->getRelativeUploadsFolderPath($record, $fileConfig)));
     }
 
     /**
      * @param RecordInterface $record
-     * @param FilesGroupConfig $fileConfig
+     * @param FileConfig $fileConfig
      * @return string
      */
-    public function getRelativeFileUploadsUrl(RecordInterface $record, FilesGroupConfig $fileConfig) {
+    public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig) {
         return static::normalizeFolderUrl($this->getRelativeUploadsFolderPath($record, $fileConfig));
     }
 
@@ -185,10 +186,10 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
             /** @var FilesGroupConfig $fileConfig */
             $fileConfig = new $class($name);
             $fileConfig
-                ->setAbsolutePathToFileFolder(function (RecordInterface $record, FilesGroupConfig $fileConfig) {
+                ->setAbsolutePathToFileFolder(function (RecordInterface $record, FileConfig $fileConfig) {
                     return $this->getAbsoluteFileUploadsFolder($record, $fileConfig);
                 })
-                ->setRelativeUrlToFileFolder(function (RecordInterface $record, FilesGroupConfig $fileConfig) {
+                ->setRelativeUrlToFileFolder(function (RecordInterface $record, FileConfig $fileConfig) {
                     return $this->getRelativeFileUploadsUrl($record, $fileConfig);
                 });
             if ($this->configs[$name] instanceof \Closure) {

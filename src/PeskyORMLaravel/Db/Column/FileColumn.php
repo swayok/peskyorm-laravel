@@ -5,7 +5,7 @@ namespace PeskyORMLaravel\Db\Column;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
 use PeskyORMLaravel\Db\Column\Utils\FileConfig;
-use PeskyORMLaravel\Db\Column\Utils\FilesUploadingColumnClosures;
+use PeskyORMLaravel\Db\Column\Utils\FileUploadingColumnClosures;
 use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
 use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
 
@@ -14,7 +14,7 @@ class FileColumn extends Column {
     /**
      * @var string
      */
-    protected $defaultClosuresClass = FilesUploadingColumnClosures::class;
+    protected $defaultClosuresClass = FileUploadingColumnClosures::class;
     /**
      * @var string
      */

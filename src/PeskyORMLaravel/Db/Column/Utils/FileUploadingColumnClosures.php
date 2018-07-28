@@ -100,7 +100,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
         if ($isFromDb && is_string($value)) {
             $value = json_decode($value, true);
         }
-        if (empty($value) || !is_array($value)) {
+        if (empty($value) || (!is_array($value) && !($value instanceof \SplFileInfo))) {
             return [];
         }
         if ($isFromDb) {
@@ -203,7 +203,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
             return parent::valueValidator($value, $isFromDb, $column);
         }
         $localizations = $column::getValidationErrorsMessages();
-        if (!is_array($value)) {
+        if (!is_array($value) && !($value instanceof \SplFileInfo)) {
             return [RecordValueHelpers::getErrorMessage($localizations, $column::VALUE_MUST_BE_ARRAY)];
         }
         $value = static::valueNormalizer($value, $isFromDb, $column);

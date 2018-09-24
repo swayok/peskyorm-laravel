@@ -73,7 +73,7 @@ class PeskyOrmServiceProvider extends ServiceProvider {
 
     public function register() {
         \Auth::provider('peskyorm', function($app, $config) {
-            return new PeskyOrmUserProvider(array_get($config, 'model'));
+            return new PeskyOrmUserProvider(array_get($config, 'model'), (array)array_get($config, 'relations', []));
         });
 
         \App::singleton('peskyorm.connection', function () {

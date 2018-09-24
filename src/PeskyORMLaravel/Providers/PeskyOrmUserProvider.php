@@ -5,6 +5,7 @@ namespace PeskyORMLaravel\Providers;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Contracts\Auth\UserProvider;
+use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
 
 class PeskyOrmUserProvider implements UserProvider {
@@ -15,34 +16,41 @@ class PeskyOrmUserProvider implements UserProvider {
      * @var string
      */
     protected $dbRecordClass;
+    /**
+     * @var array
+     */
+    protected $relationsToFetch = [];
 
     /**
      * Create a new database user provider.
      *
-     * @param  string $dbRecordClass
+     * @param string $dbRecordClass
+     * @param array $relationsToFetch
      * @throws \InvalidArgumentException
      */
-    public function __construct($dbRecordClass) {
+    public function __construct($dbRecordClass, array $relationsToFetch = []) {
         if (empty($dbRecordClass) || !class_exists($dbRecordClass)) {
             throw new \InvalidArgumentException(
                 'Argument $dbRecordClass must contin a class name that implements PeskyORM\ORM\RecordInterface'
             );
         }
         $this->dbRecordClass = $dbRecordClass;
+        $this->relationsToFetch = $relationsToFetch;
     }
 
     /**
      * Retrieve a user by their unique identifier.
      *
-     * @param  mixed $identifier
+     * @param mixed $identifier
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
     public function retrieveById($identifier) {
-        if (empty($identifier) || (int)$identifier <= 0) {
+        if (!$this->isValidIdentifierValue($identifier)) {
             return null;
         }
         /** @var RecordInterface $user */
-        $user = $this->createEmptyUserRecord()->fromPrimaryKey($identifier);
+        $user = $this->createEmptyUserRecord()->fromPrimaryKey($identifier, [], $this->getRelationsToFetch());
+
         return $this->validateUser($user, null);
     }
 
@@ -54,14 +62,51 @@ class PeskyOrmUserProvider implements UserProvider {
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
     public function retrieveByToken($identifier, $token) {
-        /** @var RecordInterface|Authenticatable $dbObject */
-        $dbObject = $this->createEmptyUserRecord();
+        /** @var RecordInterface|Authenticatable $userRecord */
+        if (!$this->isValidIdentifierValue($identifier)) {
+            return null;
+        }
+        $userRecord = $this->createEmptyUserRecord();
         /** @var RecordInterface $user */
-        $user = $dbObject->fromDb([
-            $dbObject->getAuthIdentifierName() => $identifier,
-            $dbObject->getRememberTokenName() => $token
-        ]);
+        $user = $userRecord->fromDb([
+            $userRecord->getAuthIdentifierName() => $identifier,
+            $userRecord->getRememberTokenName() => $token,
+        ], [], $this->getRelationsToFetch());
+
         return $this->validateUser($user, null);
+    }
+
+    /**
+     * @param mixed $identifier
+     * @return bool
+     */
+    protected function isValidIdentifierValue($identifier) {
+        if (is_string($identifier) && preg_match('%^s:\d+:%', $identifier)) {
+            // it seems that after one of Laravel's minor updates they does not
+            // serialize data anymore and in result it crashes during DB query
+            return false;
+        }
+
+        /** @var RecordInterface|Authenticatable $userRecord */
+        $userRecord = $this->createEmptyUserRecord();
+        // do not attempt to use empty, non-numeric or negative value in DB query
+        if (
+            empty($identifier)
+            || (
+                in_array(
+                    $userRecord::getColumn($userRecord->getAuthIdentifierName())->getType(),
+                    [Column::TYPE_INT, Column::TYPE_FLOAT],
+                    true
+                )
+                && (
+                    !is_numeric($identifier)
+                    || (int)$identifier <= 0
+                )
+            )
+        ) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -77,6 +122,7 @@ class PeskyOrmUserProvider implements UserProvider {
         ) {
             return $user;
         }
+
         return $onFailReturn;
     }
 
@@ -102,14 +148,14 @@ class PeskyOrmUserProvider implements UserProvider {
      */
     public function retrieveByCredentials(array $credentials) {
 
-        $conditions = array();
+        $conditions = [];
 
         foreach ($credentials as $key => $value) {
             if (!str_contains($key, 'password')) {
                 $conditions[$key] = $value;
             }
         }
-        $user = $this->createEmptyUserRecord()->fromDb($conditions);
+        $user = $this->createEmptyUserRecord()->fromDb($conditions, [], $this->getRelationsToFetch());
 
         return $this->validateUser($user, null);
     }
@@ -133,6 +179,7 @@ class PeskyOrmUserProvider implements UserProvider {
                 }
             }
         }
+
         return true;
     }
 
@@ -144,6 +191,7 @@ class PeskyOrmUserProvider implements UserProvider {
     public function createEmptyUserRecord() {
         /** @var RecordInterface $class */
         $class = $this->dbRecordClass;
+
         return new $class();
     }
 
@@ -154,5 +202,13 @@ class PeskyOrmUserProvider implements UserProvider {
      */
     public function getModel() {
         return $this->dbRecordClass;
+    }
+
+    /**
+     * Related records to read together with main record
+     * @return array
+     */
+    public function getRelationsToFetch() {
+        return $this->relationsToFetch;
     }
 }

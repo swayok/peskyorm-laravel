@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileInfo {
 
-    /** @var FilesGroupConfig|ImagesGroupConfig */
+    /** @var FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig */
     protected $fileConfig;
     /** @var int|string */
     protected $record;
@@ -38,12 +38,12 @@ class FileInfo {
 
     /**
      * @param array $fileInfo
-     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig $fileConfig
      * @param RecordInterface $record
      * @return static
      * @throws \UnexpectedValueException
      */
-    static public function fromArray(array $fileInfo, FilesGroupConfig $fileConfig, RecordInterface $record) {
+    static public function fromArray(array $fileInfo, FileConfig $fileConfig, RecordInterface $record) {
         /** @var FileInfo $obj */
         $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix'));
         $obj
@@ -68,14 +68,14 @@ class FileInfo {
 
     /**
      * @param \SplFileInfo $fileInfo
-     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig $fileConfig
      * @param RecordInterface $record
      * @param null|int $fileSuffix
      * @return static
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
-    static public function fromSplFileInfo(\SplFileInfo $fileInfo, FilesGroupConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    static public function fromSplFileInfo(\SplFileInfo $fileInfo, FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
         $obj = new static($fileConfig, $record, $fileSuffix);
         if (!($fileInfo instanceof UploadedFile)) {
             $fileInfo = new UploadedFile($fileInfo->getRealPath(), $fileInfo->getFilename(), null, $fileInfo->getSize(), null, true);
@@ -91,11 +91,11 @@ class FileInfo {
     }
 
     /**
-     * @param FilesGroupConfig $fileConfig
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig $fileConfig
      * @param RecordInterface $record
      * @param null|int $fileSuffix
      */
-    protected function __construct(FilesGroupConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    protected function __construct(FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
         $this->fileConfig = $fileConfig;
         $this->record = $record;
         $this->fileSuffix = $fileSuffix;
@@ -309,7 +309,7 @@ class FileInfo {
      */
     public function getFileType() {
         if (!$this->type) {
-            $this->type = FilesGroupConfig::detectFileTypeByMimeType($this->getMimeType());
+            $this->type = $this->fileConfig->detectFileTypeByMimeType($this->getMimeType());
         }
         return $this->type;
     }
@@ -386,7 +386,7 @@ class FileInfo {
      * @throws \ImagickException
      */
     public function getModifiedImage(ImageModificationConfig $modificationConfig) {
-        if (!$this->fileConfig instanceof ImagesGroupConfig) {
+        if (!($this->fileConfig instanceof ImageConfig)) {
             throw new \BadMethodCallException('Cannot modify files except images');
         }
         return ModifiedImageInfo::fromSplFileInfo(

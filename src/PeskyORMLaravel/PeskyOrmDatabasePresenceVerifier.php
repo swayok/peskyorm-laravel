@@ -36,7 +36,7 @@ class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
         if ($this->caseSensitiveModeEnabled || is_numeric($value)) {
             $conditions = [$column => $value];
         } else {
-            $conditions = [$column . ' ~*' => preg_quote($value, null)];
+            $conditions = [$column . ' ~*' => '^' . preg_quote($value, null) . '$'];
         }
         if ($excludeId !== null && $excludeId !== 'NULL') {
             $conditions[($idColumn ?: 'id') . ' !='] = $excludeId;

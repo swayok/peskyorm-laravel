@@ -24,14 +24,16 @@ class Base64UploadedFile extends UploadedFile {
         'csv' => FilesGroupConfig::CSV,
     ];
 
+    protected $tempFilePath;
+
     /**
      * @param string $fileData - file data encoded as base64 string
      * @param string $fileName - file name with extension
      * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     public function __construct($fileData, $fileName) {
-        $tempFilePath = tempnam(sys_get_temp_dir(), 'tmp');
-        $handle = fopen($tempFilePath, 'wb');
+        $this->tempFilePath = tempnam(sys_get_temp_dir(), 'tmp');
+        $handle = fopen($this->tempFilePath, 'wb');
         fwrite($handle, base64_decode(preg_replace('%^.{0,200}base64,%i', '', $fileData)));
         fclose($handle);
         if (preg_match('%^data:(.{1,100}/.{1,100});%i', $fileData, $mimeMatches)) {
@@ -39,11 +41,16 @@ class Base64UploadedFile extends UploadedFile {
         } else {
             $mime = array_get(
                 static::$extToMime,
-                strtolower(preg_replace('%^.*\.(a-zA-z0-9)+$%', '$1', $fileName)),
-                mime_content_type($tempFilePath)
+                strtolower(preg_replace('%^.*\.([a-zA-z0-9]+?)$%', '$1', $fileName)),
+                mime_content_type($this->tempFilePath)
             );
         }
-        parent::__construct($tempFilePath, $fileName, $mime, filesize($tempFilePath));
+        // update file extension according to detected mime type
+        $ext = array_get(array_flip(static::$extToMime), $mime);
+        if ($ext) {
+            $fileName = preg_replace('%^.*\.([a-zA-z0-9]+?)$%', '$1', $fileName) . '.' . $ext;
+        }
+        parent::__construct($this->tempFilePath, $fileName, $mime, filesize($this->tempFilePath));
     }
 
     public function isValid() {
@@ -52,6 +59,12 @@ class Base64UploadedFile extends UploadedFile {
 
     public function move($directory, $name = null) {
         return File::move($directory, $name);
+    }
+
+    public function __destruct() {
+        if ($this->tempFilePath && file_exists($this->tempFilePath)) {
+            \Swayok\Utils\File::remove($this->tempFilePath);
+        }
     }
 
 

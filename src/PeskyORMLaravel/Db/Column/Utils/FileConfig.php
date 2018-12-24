@@ -26,6 +26,10 @@ class FileConfig extends MimeTypesHelper {
      */
     protected $allowedMimeTypes = [];
     /**
+     * @var array|null
+     */
+    protected $allowedFileExtensions = null;
+    /**
      * @var array
      */
     protected $defaultAllowedMimeTypes = [
@@ -143,16 +147,8 @@ class FileConfig extends MimeTypesHelper {
     }
 
     /**
-     * @return array
-     */
-    public function getAllowedFileExtensions() {
-        return array_values(array_intersect_key(static::$mimeToExt, array_flip($this->getAllowedMimeTypes(false))));
-    }
-
-    /**
      * @param array $allowedMimeTypes
      * @return $this
-     * @throws \InvalidArgumentException
      */
     public function setAllowedMimeTypes(...$allowedMimeTypes) {
         if (count($allowedMimeTypes) === 1 && isset($allowedMimeTypes[0]) && is_array($allowedMimeTypes[0])) {
@@ -161,6 +157,29 @@ class FileConfig extends MimeTypesHelper {
         $this->allowedMimeTypesAliases = static::getAliasesForMimeTypes($allowedMimeTypes);
         $this->allowedMimeTypes = array_merge($allowedMimeTypes, $this->allowedMimeTypesAliases);
         return $this;
+    }
+
+    /**
+     * @param array $allowedFileExtenstions
+     * @return $this
+     */
+    public function setAllowedFileExtensions(... $allowedFileExtenstions) {
+        if (count($allowedFileExtenstions) === 1 && isset($allowedFileExtenstions[0]) && is_array($allowedFileExtenstions[0])) {
+            $allowedFileExtenstions = $allowedFileExtenstions[0];
+        }
+        $this->allowedFileExtensions = $allowedFileExtenstions;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllowedFileExtensions() {
+        if ($this->allowedFileExtensions === null) {
+            return array_values(array_intersect_key(static::$mimeToExt, array_flip($this->getAllowedMimeTypes(false))));
+        } else {
+            return $this->allowedFileExtensions;
+        }
     }
 
     /**
@@ -191,8 +210,9 @@ class FileConfig extends MimeTypesHelper {
      */
     protected function getFileNameBuilder() {
         if (!$this->fileNameBuilder) {
-            $this->fileNameBuilder = function (FilesGroupConfig $fileConfig, $fileSuffix = null) {
-                return $fileConfig->getName() . (string)$fileSuffix;
+            $this->fileNameBuilder = function ($fileConfig, $fileSuffix = null) {
+                /** @var FileConfig|FilesGroupConfig $fileConfig */
+                return $fileConfig->getName() . $fileSuffix;
             };
         }
         return $this->fileNameBuilder;

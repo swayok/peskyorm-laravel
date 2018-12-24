@@ -21,6 +21,7 @@ abstract class MimeTypesHelper {
     const ZIP = 'application/zip';
     const RAR = 'application/x-rar-compressed';
     const GZIP = 'application/gzip';
+    const ANDROID_APK = 'application/vnd.android.package-archive';
     const MP4_VIDEO = 'video/mp4';
     const MP4_AUDIO = 'audio/mp4';
     const UNKNOWN = 'application/octet-stream';
@@ -48,6 +49,7 @@ abstract class MimeTypesHelper {
         self::ZIP => 'zip',
         self::RAR => 'rar',
         self::GZIP => 'gzip',
+        self::ANDROID_APK => 'apk',
     ];
 
     /**

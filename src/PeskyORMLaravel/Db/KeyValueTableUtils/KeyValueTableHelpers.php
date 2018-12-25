@@ -128,11 +128,11 @@ trait KeyValueTableHelpers {
     }
 
     /**
-     * @param string $encodedValue
+     * @param string|array $encodedValue
      * @return mixed
      */
     static public function decodeValue($encodedValue) {
-        return json_decode($encodedValue, true);
+        return is_array($encodedValue) ? $encodedValue : json_decode($encodedValue, true);
     }
 
     /**
@@ -247,49 +247,71 @@ trait KeyValueTableHelpers {
      *      - true: if value recorded to DB is empty - returns $default
      *      - false: returns any value from DB if it exists
      * @return array
-     * @throws \PeskyORM\Exception\InvalidDataException
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \PDOException
      * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     static public function getValue($key, $foreignKeyValue = null, $default = null, $ignoreEmptyValue = false) {
+        return static::getFormattedValue($key, null, $foreignKeyValue, $default, $ignoreEmptyValue);
+    }
+
+    /**
+     * @param string $key
+     * @param string|null $format - get formatted version of value
+     * @param mixed $foreignKeyValue - use null if there is no main foreign key column and
+     *      getMainForeignKeyColumnName() method returns null
+     * @param mixed $default
+     * @param bool $ignoreEmptyValue
+     *      - true: if value recorded to DB is empty - returns $default
+     *      - false: returns any value from DB if it exists
+     * @return mixed|null
+     * @throws \PeskyORM\Exception\InvalidDataException
+     * @throws \PeskyORM\Exception\OrmException
+     */
+    static public function getFormattedValue($key, $format, $foreignKeyValue = null, $default = null, $ignoreEmptyValue = false) {
         $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
+        $table = static::getInstance();
         if (!empty($cacheKey)) {
             $value = array_get(self::getValuesForForeignKey($foreignKeyValue), $key, $default);
-            return $ignoreEmptyValue && static::isEmptyValue($value)
+            $ret = $ignoreEmptyValue && static::isEmptyValue($value)
                 ? value($default)
                 : $value;
-        }
-        $conditions = [
-            static::getKeysColumnName() => $key
-        ];
-        $fkName = static::getInstance()->getMainForeignKeyColumnName();
-        if ($fkName !== null) {
-            if (empty($foreignKeyValue)) {
-                throw new \InvalidArgumentException('$foreignKeyValue argument is required');
+            if ($format === null || !$table->getTableStructure()->hasColumn($key)) {
+                return $ret;
+            } else {
+                $record = [
+                    static::getValuesColumnName() => $value,
+                ];
             }
-            $conditions[$fkName] = $foreignKeyValue;
-        } else if (!empty($foreignKeyValue)) {
-            throw new \InvalidArgumentException(
-                '$foreignKeyValue must be null when model does not have main foreign key column'
-            );
         }
-        /** @var array $record */
-        $record = static::selectOne('*', $conditions);
-        if (static::getTableStructure()->hasColumn($key)) {
+        if (empty($record)) {
+            $conditions = [
+                static::getKeysColumnName() => $key
+            ];
+            $fkName = $table->getMainForeignKeyColumnName();
+            if ($fkName !== null) {
+                if (empty($foreignKeyValue)) {
+                    throw new \InvalidArgumentException('$foreignKeyValue argument is required');
+                }
+                $conditions[$fkName] = $foreignKeyValue;
+            } else if (!empty($foreignKeyValue)) {
+                throw new \InvalidArgumentException(
+                    '$foreignKeyValue must be null when model does not have main foreign key column'
+                );
+            }
+            /** @var array $record */
+            $record = static::selectOne('*', $conditions);
+        }
+        if ($table->getTableStructure()->hasColumn($key)) {
             // modify value so that it is processed by custom column defined in table structure
             // if $record is empty it uses default value provided by $column prior to $default
-            $column = static::getTableStructure()->getColumn($key);
+            $column = $table->getTableStructure()->getColumn($key);
             if (!$column->isItExistsInDb()) {
-                $recordObj = static::getInstance()->newRecord();
+                $recordObj = $table->newRecord();
                 if (empty($record)) {
-                    return $recordObj->hasValue($column, true) ? $recordObj->getValue($column) : $default;
+                    return $recordObj->hasValue($column, true) ? $recordObj->getValue($column, $format) : $default;
                 } else {
                     $value = $recordObj
                         ->updateValue($column, static::decodeValue($record[static::getValuesColumnName()]), false)
-                        ->getValue($column);
+                        ->getValue($column, $format);
                     return ($ignoreEmptyValue && static::isEmptyValue($value)) ? $default : $value;
                 }
             }

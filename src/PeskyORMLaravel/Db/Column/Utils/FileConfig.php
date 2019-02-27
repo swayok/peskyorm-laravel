@@ -4,7 +4,7 @@ namespace PeskyORMLaravel\Db\Column\Utils;
 
 use PeskyORM\ORM\RecordInterface;
 
-class FileConfig extends MimeTypesHelper {
+class FileConfig extends MimeTypesHelper implements FileConfigInterface {
 
     /** @var string */
     protected $name;

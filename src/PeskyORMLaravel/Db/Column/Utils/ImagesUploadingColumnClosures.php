@@ -13,7 +13,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
     /**
      * Validate uploaded file contents (mime type, size, etc.)
      * @param Column|ImagesColumn $column
-     * @param FilesGroupConfig $fileConfig
+     * @param FilesGroupConfigInterface $fileConfig
      * @param SymfonyUploadedFile $file
      * @param int $fileIndex
      * @param array $errors
@@ -22,7 +22,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      */
     static protected function validateUploadedFileContents(
         Column $column,
-        FilesGroupConfig $fileConfig,
+        FilesGroupConfigInterface $fileConfig,
         SymfonyUploadedFile $file,
         $fileIndex,
         array &$errors

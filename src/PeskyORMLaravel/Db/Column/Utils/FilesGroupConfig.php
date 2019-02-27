@@ -2,7 +2,7 @@
 
 namespace PeskyORMLaravel\Db\Column\Utils;
 
-class FilesGroupConfig extends FileConfig {
+class FilesGroupConfig extends FileConfig implements FilesGroupConfigInterface {
 
     /**
      * @param int $count - 0 for unlimited

@@ -2,7 +2,7 @@
 
 namespace PeskyORMLaravel\Db\Column\Utils;
 
-class ImagesGroupConfig extends ImageConfig {
+class ImagesGroupConfig extends ImageConfig implements FilesGroupConfigInterface {
 
     /**
      * @param int $count - 0 for unlimited

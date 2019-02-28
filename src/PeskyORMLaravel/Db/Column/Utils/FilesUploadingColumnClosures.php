@@ -373,7 +373,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * Validate uploaded file contents (mime type, size, etc.)
      * @param Column|FilesColumn|ImagesColumn $column
-     * @param FilesGroupConfigInterface $fileConfig
+     * @param FileConfigInterface $fileConfig
      * @param SymfonyUploadedFile $file
      * @param int $fileIndex
      * @param array $errors
@@ -381,7 +381,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      */
     static protected function validateUploadedFileContents(
         Column $column,
-        FilesGroupConfigInterface $fileConfig,
+        FileConfigInterface $fileConfig,
         SymfonyUploadedFile $file,
         $fileIndex,
         array &$errors
@@ -543,13 +543,13 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * @param array $filesInfos
-     * @param FilesGroupConfig $filesGroupConfig
+     * @param FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @return array
      */
-    static protected function limitFilesCount(array $filesInfos, FilesGroupConfig $filesGroupConfig, RecordInterface $record) {
-        while (count($filesInfos) > $filesGroupConfig->getMaxFilesCount()) {
-            static::deleteExistingFiles(FileInfo::fromArray(array_shift($filesInfos), $filesGroupConfig, $record));
+    static protected function limitFilesCount(array $filesInfos, FileConfigInterface $fileConfig, RecordInterface $record) {
+        while (count($filesInfos) > $fileConfig->getMaxFilesCount()) {
+            static::deleteExistingFiles(FileInfo::fromArray(array_shift($filesInfos), $fileConfig, $record));
         }
         return array_values($filesInfos);
     }
@@ -564,7 +564,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * @param RecordInterface $record
-     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param FileConfigInterface $fileConfig
      * @param array $fileUploads
      * @param array $existingFiles
      * @return array
@@ -573,7 +573,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      */
     static protected function storeUploadedFiles(
         RecordInterface $record,
-        FilesGroupConfig $fileConfig,
+        FileConfigInterface $fileConfig,
         array $fileUploads,
         array $existingFiles
     ) {
@@ -620,9 +620,9 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * Modify uploaded file after it was stroed to file system but before data was saved to DB.
      * You can store additional info via $fileInfo->setCustomInfo() (you may need to merge with existing info)
      * @param FileInfo $fileInfo
-     * @param FilesGroupConfig $fileConfig
+     * @param FileConfigInterface $fileConfig
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FilesGroupConfig $fileConfig) {
+    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
 
     }
 

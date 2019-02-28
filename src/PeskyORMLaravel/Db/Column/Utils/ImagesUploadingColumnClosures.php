@@ -13,7 +13,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
     /**
      * Validate uploaded file contents (mime type, size, etc.)
      * @param Column|ImagesColumn $column
-     * @param FilesGroupConfigInterface $fileConfig
+     * @param FileConfigInterface $fileConfig
      * @param SymfonyUploadedFile $file
      * @param int $fileIndex
      * @param array $errors
@@ -22,7 +22,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      */
     static protected function validateUploadedFileContents(
         Column $column,
-        FilesGroupConfigInterface $fileConfig,
+        FileConfigInterface $fileConfig,
         SymfonyUploadedFile $file,
         $fileIndex,
         array &$errors
@@ -76,11 +76,11 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
 
     /**
      * @param FileInfo $fileInfo
-     * @param FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param FileConfigInterface $fileConfig
      * @throws \UnexpectedValueException
      * @throws \ImagickException
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FilesGroupConfig $fileConfig) {
+    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
         // modify image size if needed
         $imagick = new \Imagick($fileInfo->getAbsoluteFilePath());
         // aspect ratio

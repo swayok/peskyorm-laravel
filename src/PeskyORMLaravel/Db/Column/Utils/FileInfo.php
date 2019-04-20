@@ -11,7 +11,7 @@ class FileInfo {
 
     /** @var FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig */
     protected $fileConfig;
-    /** @var int|string */
+    /** @var RecordInterface */
     protected $record;
     /** @var string */
     protected $fileName;

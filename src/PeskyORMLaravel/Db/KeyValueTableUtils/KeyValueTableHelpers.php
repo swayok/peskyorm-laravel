@@ -13,7 +13,8 @@ use Swayok\Utils\NormalizeValue;
 
 /**
  * @method static KeyValueTableInterface|TableInterface|$this getInstance()
- * @method static TableStructureInterface getTableStructure()
+ * @method static TableStructureInterface getStructure()
+ * @method TableStructureInterface getTableStructure()
  */
 trait KeyValueTableHelpers {
 
@@ -93,15 +94,7 @@ trait KeyValueTableHelpers {
         if ($value instanceof DbExpr) {
             return $value;
         } else {
-            $value = NormalizeValue::normalizeJson($value);
-            if ($value === null) {
-                if (static::getTableStructure()->getColumn(static::getValuesColumnName())->allowsNullValues()) {
-                    return null;
-                } else {
-                    return '';
-                }
-            }
-            return $value;
+            return NormalizeValue::normalizeJson($value);
         }
     }
 
@@ -165,15 +158,7 @@ trait KeyValueTableHelpers {
      * Update existing value or create new one
      * @param array $data - must contain: key, foreign_key, value
      * @return Record
-     * @throws \PeskyORM\Exception\RecordNotFoundException
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \PeskyORM\Exception\InvalidTableColumnConfigException
-     * @throws \PeskyORM\Exception\InvalidDataException
-     * @throws \PeskyORM\Exception\DbException
-     * @throws \PDOException
      * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     static public function updateOrCreateRecord(array $data) {
         if (empty($data[static::getKeysColumnName()])) {
@@ -271,8 +256,7 @@ trait KeyValueTableHelpers {
      *      - true: if value recorded to DB is empty - returns $default
      *      - false: returns any value from DB if it exists
      * @return mixed|null
-     * @throws \PeskyORM\Exception\InvalidDataException
-     * @throws \PeskyORM\Exception\OrmException
+     * @throws \InvalidArgumentException
      */
     static public function getFormattedValue($key, $format, $foreignKeyValue = null, $default = null, $ignoreEmptyValue = false) {
         $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
@@ -346,12 +330,7 @@ trait KeyValueTableHelpers {
      *      - true: return only not empty values stored in DB
      *      - false: return all values strored in db
      * @return array
-     * @throws \PeskyORM\Exception\InvalidDataException
-     * @throws \PDOException
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
      * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     static public function getValuesForForeignKey($foreignKeyValue = null, $ignoreCache = false, $ignoreEmptyValues = false) {
         if (!$ignoreCache) {

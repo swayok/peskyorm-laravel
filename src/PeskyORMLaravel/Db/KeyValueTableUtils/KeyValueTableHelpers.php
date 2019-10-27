@@ -93,7 +93,15 @@ trait KeyValueTableHelpers {
         if ($value instanceof DbExpr) {
             return $value;
         } else {
-            return NormalizeValue::normalizeJson($value);
+            $value = NormalizeValue::normalizeJson($value);
+            if ($value === null) {
+                if (static::getTableStructure()->getColumn(static::getValuesColumnName())->allowsNullValues()) {
+                    return null;
+                } else {
+                    return '';
+                }
+            }
+            return $value;
         }
     }
 

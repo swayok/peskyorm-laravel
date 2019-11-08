@@ -18,12 +18,6 @@ trait InjectsDbObjects {
 
     /**
      * @param $parameters
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\InvalidDataException
      */
     protected function readDbObjectForInjection($parameters) {
         /** @var Route $route */
@@ -51,11 +45,15 @@ trait InjectsDbObjects {
                 $this->addIsActiveAndIsDeletedConditionsForDbObjectInjection($route, $object, $conditions);
             }
             $this->addParentIdsConditionsForDbObjectInjection($route, $object, $conditions);
-            $object->fromDb($conditions);
+            $object->fromDb($conditions, $this->getColumnsListForDbObjectInjection($object));
             if (!$object->existsInDb()) {
                 $this->sendRecordNotFoundResponse();
             }
         }
+    }
+
+    protected function getColumnsListForDbObjectInjection(RecordInterface $object): array {
+        return ['*']; //< '*' here will skip heavy columns. To read all columns use empty array
     }
 
     /**
@@ -92,10 +90,6 @@ trait InjectsDbObjects {
      * @param Route $route
      * @param RecordInterface $object
      * @param array $conditions
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \UnexpectedValueException
      */
     protected function addParentIdsConditionsForDbObjectInjection(Route $route, RecordInterface $object, array &$conditions) {
         foreach ($route->parameterNames() as $name) {

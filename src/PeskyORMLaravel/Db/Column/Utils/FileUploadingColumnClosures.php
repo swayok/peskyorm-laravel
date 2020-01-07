@@ -64,6 +64,11 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
                     'delete' => $deleteCurrentFile
                 ]);
             }
+        } else {
+            $valueContainer
+                ->setIsFromDb(false)
+                ->setRawValue([], '{}', false)
+                ->setValidValue('{}', []);
         }
         return $valueContainer;
     }

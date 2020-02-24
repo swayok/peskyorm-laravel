@@ -28,7 +28,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
         }
         /** @var FileColumn $column */
         $column = $valueContainer->getColumn();
-        $errors = $column->validateValue($newValue, $isFromDb);
+        $errors = $column->validateValue($newValue, $isFromDb, false);
         if (count($errors) > 0) {
             return $valueContainer->setValidationErrors($errors);
         }

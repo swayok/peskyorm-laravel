@@ -21,10 +21,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @param bool $trustDataReceivedFromDb
      * @return RecordValue
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
-     * @throws \UnexpectedValueException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     static public function valueSetter($newValue, $isFromDb, RecordValue $valueContainer, $trustDataReceivedFromDb) {
         if ($isFromDb || empty($newValue)) {
@@ -61,9 +57,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $normaizledValue
      * @param RecordValue $valueContainer
      * @return array
-     * @throws \BadMethodCallException
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
-     * @throws \UnexpectedValueException
      */
     static protected function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
         list($newFiles, $uuidPosition, $uuidsOfFilesToDelete) = static::analyzeUploadedFilesAndData($normaizledValue);
@@ -109,7 +102,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param array $normaizledValue
      * @return array
-     * @throws \UnexpectedValueException
      */
     static protected function analyzeUploadedFilesAndData(array $normaizledValue) {
         $newFiles = [];
@@ -139,7 +131,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $uuidPosition
      * @param array $uuidsOfFilesToDelete
      * @return array
-     * @throws \UnexpectedValueException
      */
     static protected function getExitstingFilesToDeleteOrUpdatePositions(
         array &$currentValue,
@@ -173,7 +164,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @param $fileName
      * @return mixed
-     * @throws \UnexpectedValueException
      */
     static protected function getFileUuid($fileName, array $fileData, RecordValue $valueContainer) {
         return array_get($fileData, 'uuid', function () use ($fileName, $fileData, $valueContainer) {
@@ -193,8 +183,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param bool $isFromDb
      * @param Column|ImagesColumn|FilesColumn $column
      * @return array
-     * @throws \UnexpectedValueException
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static public function valueNormalizer($value, $isFromDb, Column $column) {
         if ($isFromDb && !is_array($value)) {
@@ -250,7 +238,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param array $uploadedFiles
      * @return array
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static protected function normalizeUploadedFiles(array $uploadedFiles) {
         if (array_has($uploadedFiles, 'file') || array_has($uploadedFiles, 'deleted')) {
@@ -314,16 +301,13 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * Validates value. Uses valueValidatorExtender
      * @param mixed $value
      * @param bool $isFromDb
+     * @param bool $isForCondition
      * @param Column|ImagesColumn|FilesColumn $column
      * @return array
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
-     * @throws \UnexpectedValueException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
-    static public function valueValidator($value, $isFromDb, Column $column) {
+    static public function valueValidator($value, $isFromDb, $isForCondition, Column $column) {
         if ($isFromDb || is_string($value)) {
-            return parent::valueValidator($value, $isFromDb, $column);
+            return parent::valueValidator($value, $isFromDb, $isForCondition, $column);
         }
         $localizations = $column::getValidationErrorsMessages();
         if (!is_array($value)) {
@@ -414,7 +398,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param array $fileUpload
      * @return \Illuminate\Http\UploadedFile
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static protected function makeUploadedFileFromArray(array $fileUpload) {
         return new \Illuminate\Http\UploadedFile(
@@ -430,7 +413,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param \SplFileInfo $fileInfo
      * @return \Illuminate\Http\UploadedFile
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static protected function makeUploadedFileFromSplFileInfo(\SplFileInfo $fileInfo) {
         return new \Illuminate\Http\UploadedFile(
@@ -457,15 +439,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param bool $isUpdate
      * @param array $savedData
      * @return void
-     * @throws \PeskyORM\Exception\InvalidTableColumnConfigException
-     * @throws \PeskyORM\Exception\InvalidDataException
-     * @throws \PeskyORM\Exception\DbException
-     * @throws \PDOException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
-     * @throws \UnexpectedValueException
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static public function valueSavingExtender(RecordValue $valueContainer, $isUpdate, array $savedData) {
         $updates = $valueContainer->pullDataForSavingExtender();
@@ -556,7 +529,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * @param FileInfo $fileInfo
-     * @throws \UnexpectedValueException
      */
     static protected function deleteExistingFiles(FileInfo $fileInfo) {
         \File::delete($fileInfo->getAbsoluteFilePath());
@@ -568,8 +540,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $fileUploads
      * @param array $existingFiles
      * @return array
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
-     * @throws \UnexpectedValueException
      */
     static protected function storeUploadedFiles(
         RecordInterface $record,
@@ -648,9 +618,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @param bool $deleteFiles
      * @return void
-     * @throws \UnexpectedValueException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     static public function valueDeleteExtender(RecordValue $valueContainer, $deleteFiles) {
         if ($deleteFiles) {
@@ -671,9 +638,6 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @param string $format
      * @return mixed
-     * @throws \BadMethodCallException
-     * @throws \UnexpectedValueException
-     * @throws \InvalidArgumentException
      */
     static public function valueFormatter(RecordValue $valueContainer, $format) {
         /** @var FilesColumn $column */

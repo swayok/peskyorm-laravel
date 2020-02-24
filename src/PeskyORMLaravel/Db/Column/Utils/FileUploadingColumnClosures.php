@@ -188,12 +188,13 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * Validates value. Uses valueValidatorExtender
      * @param mixed $value
      * @param bool $isFromDb
+     * @param bool $isForCondition
      * @param Column|ImageColumn|FileColumn $column
      * @return array
      */
-    static public function valueValidator($value, $isFromDb, Column $column) {
+    static public function valueValidator($value, $isFromDb, $isForCondition, Column $column) {
         if ($isFromDb || is_string($value)) {
-            return parent::valueValidator($value, $isFromDb, $column);
+            return parent::valueValidator($value, $isFromDb, $isForCondition, $column);
         }
         $localizations = $column::getValidationErrorsMessages();
         if (!is_array($value) && !($value instanceof \SplFileInfo)) {

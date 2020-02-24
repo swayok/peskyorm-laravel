@@ -38,7 +38,7 @@ class FileInfo {
 
     /**
      * @param array $fileInfo
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @return static
      * @throws \UnexpectedValueException

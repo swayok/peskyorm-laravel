@@ -6,6 +6,8 @@ class ImageConfig extends FileConfig {
 
     /** @var int */
     protected $maxWidth = 1920;
+    /** @var int */
+    protected $maxHeight = 0;
     /** @var float */
     protected $aspectRatio;
 
@@ -30,8 +32,24 @@ class ImageConfig extends FileConfig {
      * @param int $maxWidth
      * @return $this
      */
-    public function setMaxWidth($maxWidth) {
-        $this->maxWidth = (int)$maxWidth;
+    public function setMaxWidth(int $maxWidth) {
+        $this->maxWidth = $maxWidth;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxHeight(): int {
+        return $this->maxHeight;
+    }
+
+    /**
+     * @param int $maxHeight
+     * @return $this
+     */
+    public function setMaxHeight(int $maxHeight) {
+        $this->maxHeight = $maxHeight;
         return $this;
     }
 
@@ -47,7 +65,7 @@ class ImageConfig extends FileConfig {
      * @param int $height - for example: 3, 9
      * @return $this
      */
-    public function setAspectRatio($width, $height) {
+    public function setAspectRatio(int $width, int $height) {
         $this->aspectRatio = (float)$width / (float)$height;
         return $this;
     }
@@ -81,6 +99,7 @@ class ImageConfig extends FileConfig {
             [
                 'aspect_ratio' => $this->getAspectRatio(),
                 'max_width' => $this->getMaxWidth(),
+                'max_height' => $this->getMaxHeight()
             ]
         );
     }

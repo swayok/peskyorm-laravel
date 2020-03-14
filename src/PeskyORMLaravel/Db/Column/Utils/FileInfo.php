@@ -2,6 +2,7 @@
 
 namespace PeskyORMLaravel\Db\Column\Utils;
 
+use PeskyCMF\Scaffold\Form\UploadedTempFileInfo;
 use PeskyORM\ORM\RecordInterface;
 use Ramsey\Uuid\Uuid;
 use Swayok\Utils\File;
@@ -17,14 +18,14 @@ class FileInfo {
     protected $fileName;
     /** @var string */
     protected $originalFileName;
-    /** @var null|int|string */
+    /** @var null|string */
     protected $fileSuffix;
     /** @var string */
     protected $fileExtension;
     /** @var string */
     protected $uuid;
     /** @var string */
-    protected $uuidFoDb;
+    protected $uuidForDb;
     /** @var array */
     protected $customInfo = [];
     /** @var null|int */
@@ -33,6 +34,8 @@ class FileInfo {
     protected $mime;
     /** @var null|string */
     protected $type;
+    /** @var null|string */
+    protected $uploadedFilePath;
     /** @var int */
     static private $autoPositioningCounter = 1;
 
@@ -41,9 +44,8 @@ class FileInfo {
      * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @return static
-     * @throws \UnexpectedValueException
      */
-    static public function fromArray(array $fileInfo, FileConfig $fileConfig, RecordInterface $record) {
+    static public function fromArray(array $fileInfo, FileConfigInterface $fileConfig, RecordInterface $record) {
         /** @var FileInfo $obj */
         $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix'));
         $obj
@@ -68,14 +70,17 @@ class FileInfo {
 
     /**
      * @param \SplFileInfo $fileInfo
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
-     * @param null|int $fileSuffix
+     * @param null|string $fileSuffix
      * @return static
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
-    static public function fromSplFileInfo(\SplFileInfo $fileInfo, FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    static public function fromSplFileInfo(
+        \SplFileInfo $fileInfo,
+        FileConfigInterface $fileConfig,
+        RecordInterface $record,
+        ?string $fileSuffix = null
+    ) {
         $obj = new static($fileConfig, $record, $fileSuffix);
         if (!($fileInfo instanceof UploadedFile)) {
             $fileInfo = new UploadedFile($fileInfo->getRealPath(), $fileInfo->getFilename(), null, $fileInfo->getSize(), null, true);
@@ -83,6 +88,7 @@ class FileInfo {
 
         $extension = $fileInfo->getClientOriginalExtension();
         $obj
+            ->setUploadedFilePath($fileInfo->getRealPath())
             ->setFileExtension($extension)
             ->setOriginalFileName(preg_replace("%\.{$extension}$%", '', $fileInfo->getClientOriginalName()))
             ->setMimeType(static::detectMimeType($fileInfo))
@@ -91,11 +97,34 @@ class FileInfo {
     }
 
     /**
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig $fileConfig
+     * @param UploadedTempFileInfo $tempFileInfo
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
-     * @param null|int $fileSuffix
+     * @param null|string $fileSuffix
+     * @return static
      */
-    protected function __construct(FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    static public function fromUploadedTempFileInfo(
+        UploadedTempFileInfo $tempFileInfo,
+        FileConfigInterface $fileConfig,
+        RecordInterface $record,
+        ?string $fileSuffix = null
+    ) {
+        $obj = new static($fileConfig, $record, $fileSuffix);
+        $obj
+            ->setUploadedFilePath($tempFileInfo->getRealPath())
+            ->setFileExtension(MimeTypesHelper::getExtensionForMimeType($tempFileInfo->getType()))
+            ->setOriginalFileName(preg_replace('%\..*?$%', '', $tempFileInfo->getName()))
+            ->setMimeType($tempFileInfo->getType())
+            ->setUuid($obj->makeUuid());
+        return $obj;
+    }
+
+    /**
+     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
+     * @param RecordInterface $record
+     * @param null|string $fileSuffix
+     */
+    protected function __construct(FileConfigInterface $fileConfig, RecordInterface $record, ?string $fileSuffix = null) {
         $this->fileConfig = $fileConfig;
         $this->record = $record;
         $this->fileSuffix = $fileSuffix;
@@ -115,10 +144,10 @@ class FileInfo {
      * @return string
      */
     protected function getUuidForDb() {
-        if (empty($this->uuidFoDb)) {
-            $this->uuidFoDb = $this->isTempUuid() ? $this->makeUuid() : $this->getUuid();
+        if (empty($this->uuidForDb)) {
+            $this->uuidForDb = $this->isTempUuid() ? $this->makeUuid() : $this->getUuid();
         }
-        return $this->uuidFoDb;
+        return $this->uuidForDb;
     }
 
     /**
@@ -130,7 +159,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     protected function makeTempUuid() {
         return 'hash:' . sha1($this->getAbsoluteFilePath() . $this->getOriginalFileNameWithExtension());
@@ -153,6 +181,22 @@ class FileInfo {
     }
 
     /**
+     * @return string|null
+     */
+    public function getUploadedFilePath(): ?string {
+        return $this->uploadedFilePath;
+    }
+
+    /**
+     * @param string|null $uploadedFilePath
+     * @return $this
+     */
+    public function setUploadedFilePath(?string $uploadedFilePath) {
+        $this->uploadedFilePath = $uploadedFilePath;
+        return $this;
+    }
+
+    /**
      * @return int|null|string
      */
     public function getFileSuffix() {
@@ -161,7 +205,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getFileName() {
         if (!$this->fileName) {
@@ -172,7 +215,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getFileNameWithExtension() {
         return rtrim($this->getFileName() . '.' . $this->getFileExtension(), '.');
@@ -191,7 +233,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getOriginalFileName() {
         if (!$this->originalFileName) {
@@ -202,7 +243,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getOriginalFileNameWithExtension() {
         return rtrim($this->getOriginalFileName() . '.' . $this->getFileExtension(), '.');
@@ -235,7 +275,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getAbsoluteFilePath() {
         return $this->fileConfig->getAbsolutePathToFileFolder($this->record) . $this->getFileNameWithExtension();
@@ -243,7 +282,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getAbsolutePathToModifiedImagesFolder() {
         return $this->fileConfig->getAbsolutePathToFileFolder($this->record) . $this->getFileName();
@@ -291,8 +329,6 @@ class FileInfo {
     /**
      * @param string|\SplFileInfo|UploadedFile $file
      * @return null|string
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileException
      */
     static public function detectMimeType($file) {
         if ($file instanceof UploadedFile) {
@@ -309,6 +345,7 @@ class FileInfo {
      */
     public function getFileType() {
         if (!$this->type) {
+            /** @noinspection StaticInvocationViaThisInspection */
             $this->type = $this->fileConfig->detectFileTypeByMimeType($this->getMimeType());
         }
         return $this->type;
@@ -347,7 +384,6 @@ class FileInfo {
 
     /**
      * @return bool
-     * @throws \UnexpectedValueException
      */
     public function exists() {
         return File::exist($this->getAbsoluteFilePath());
@@ -355,7 +391,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getRelativeUrl() {
         return $this->fileConfig->getRelativeUrlToFileFolder($this->record) . $this->getFileNameWithExtension();
@@ -363,7 +398,6 @@ class FileInfo {
 
     /**
      * @return string
-     * @throws \UnexpectedValueException
      */
     public function getAbsoluteUrl() {
         return url($this->getRelativeUrl());
@@ -371,7 +405,6 @@ class FileInfo {
 
     /**
      * @return int
-     * @throws \UnexpectedValueException
      */
     public function getSize() {
         return $this->exists() ? filesize($this->getAbsoluteFilePath()) : 0;
@@ -380,10 +413,7 @@ class FileInfo {
     /**
      * @param ImageModificationConfig $modificationConfig
      * @return ModifiedImageInfo;
-     * @throws \UnexpectedValueException
      * @throws \BadMethodCallException
-     * @throws \Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException
-     * @throws \ImagickException
      */
     public function getModifiedImage(ImageModificationConfig $modificationConfig) {
         if (!($this->fileConfig instanceof ImageConfig)) {
@@ -402,7 +432,6 @@ class FileInfo {
 
     /**
      * @return \SplFileInfo
-     * @throws \UnexpectedValueException
      */
     public function getSplFileInfo() {
         return new \SplFileInfo($this->getAbsoluteFilePath());
@@ -410,9 +439,8 @@ class FileInfo {
 
     /**
      * @return array
-     * @throws \UnexpectedValueException
      */
-    public function collectImageInfoForDb() {
+    public function collectFileInfoForDb() {
         return [
             'config_name' => $this->fileConfig->getName(),
             'original_name' => $this->getOriginalFileName(), //< original file name without extension

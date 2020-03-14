@@ -56,7 +56,7 @@ class NoFileInfo extends FileInfo {
         return null;
     }
 
-    public function collectImageInfoForDb() {
+    public function collectFileInfoForDb() {
         throw new \BadMethodCallException('You should not call this method. NoFileInfo class is designed to be dummy.');
     }
 

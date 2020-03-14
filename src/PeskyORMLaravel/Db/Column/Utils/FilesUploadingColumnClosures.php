@@ -577,7 +577,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
                 }
                 // modify file
                 static::modifyUploadedFileAfterSaveToFs($fileInfo, $fileConfig);
-                $existingFiles[] = $fileInfo->collectImageInfoForDb();
+                $existingFiles[] = $fileInfo->collectFileInfoForDb();
             }
         }
         if (empty($existingFiles)) {

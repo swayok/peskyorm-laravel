@@ -58,8 +58,8 @@ class AsyncImagesUploadingColumnClosures extends AsyncFilesUploadingColumnClosur
      * @param FileInfo $fileInfo
      * @throws \UnexpectedValueException
      */
-    static protected function deleteExistingFiles(FileInfo $fileInfo) {
-        parent::deleteExistingFiles($fileInfo);
+    static protected function deleteExistingFile(FileInfo $fileInfo) {
+        parent::deleteExistingFile($fileInfo);
         \File::cleanDirectory($fileInfo->getAbsolutePathToModifiedImagesFolder());
     }
 

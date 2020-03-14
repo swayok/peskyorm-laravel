@@ -343,7 +343,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param FileInfo $fileInfo
      */
-    static protected function deleteExistingFiles(FileInfo $fileInfo) {
+    static protected function deleteExistingFile(FileInfo $fileInfo) {
         \File::delete($fileInfo->getAbsoluteFilePath());
     }
 
@@ -377,7 +377,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
             }
             // modify file
             static::modifyUploadedFileAfterSaveToFs($fileInfo, $fileConfig);
-            return $fileInfo->collectImageInfoForDb();
+            return $fileInfo->collectFileInfoForDb();
         }
         return [];
     }

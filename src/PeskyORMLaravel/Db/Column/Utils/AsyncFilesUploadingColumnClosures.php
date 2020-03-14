@@ -11,8 +11,6 @@ use PeskyORM\ORM\RecordValueHelpers;
 use PeskyORMLaravel\Db\Column\AsyncFilesColumn;
 use PeskyORMLaravel\Db\Column\FilesColumn;
 use PeskyORMLaravel\Db\Column\ImagesColumn;
-use Swayok\Utils\ValidateValue;
-use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
 class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
 
@@ -25,7 +23,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @return RecordValue
      */
     static public function valueSetter($newValue, $isFromDb, RecordValue $valueContainer, $trustDataReceivedFromDb) {
-        if ($isFromDb || empty($newValue)) {
+        if ($isFromDb) {
             return parent::valueSetter($newValue, $isFromDb, $valueContainer, $trustDataReceivedFromDb);
         }
         /** @var AsyncFilesColumn $column */
@@ -36,21 +34,14 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
             return $valueContainer->setValidationErrors($errors);
         }
         /** @var array $newValue */
-        if (count($normaizledValue) === 0) {
-            if ($valueContainer->hasValue()) {
-                $valueContainer->setDataForSavingExtender(['new' => [], 'delete' => $valueContainer->getValue()]);
-            }
-            $valueContainer->setRawValue('{}', '{}', false)->setValidValue('{}', '{}');
-        } else {
-            list($newFiles, $filesToDelete, $updatedValue) = static::collectDataForSaving($normaizledValue, $valueContainer);
-            $valueContainer->setIsFromDb(false);
-            $json = json_encode($updatedValue, JSON_UNESCAPED_UNICODE);
-            $valueContainer
-                ->setRawValue($updatedValue, $json, false)
-                ->setValidValue($json, $updatedValue);
-            if (!empty($newFiles) || !empty($filesToDelete)) {
-                $valueContainer->setDataForSavingExtender(['new' => $newFiles, 'delete' => $filesToDelete]);
-            }
+        list($newFiles, $filesToDelete, $updatedValue) = static::collectDataForSaving($normaizledValue, $valueContainer);
+        $valueContainer->setIsFromDb(false);
+        $json = json_encode($updatedValue, JSON_UNESCAPED_UNICODE);
+        $valueContainer
+            ->setRawValue($updatedValue, $json, false)
+            ->setValidValue($json, $updatedValue);
+        if (!empty($newFiles) || !empty($filesToDelete)) {
+            $valueContainer->setDataForSavingExtender(['new' => $newFiles, 'delete' => $filesToDelete]);
         }
         return $valueContainer;
     }
@@ -61,119 +52,72 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @return array
      */
     static protected function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
-        list($newFiles, $uuidPosition, $uuidsOfFilesToDelete) = static::analyzeUploadedFilesAndData($normaizledValue);
-
         /** @var FilesColumn $column */
         $column = $valueContainer->getColumn();
+        $filesGroups = $column->getFilesGroupsConfigurations();
+
         $currentValue = [];
         if ($valueContainer->hasValue()) {
-            $currentValue = $valueContainer->getValue();
-            if (!is_array($currentValue)) {
-                $currentValue = json_decode($currentValue, true);
-                if (is_array($currentValue) && !empty($currentValue)) {
-                    $currentValue = static::valueNormalizer($currentValue, false, $column);
-                } else {
-                    $currentValue = [];
+            $value = static::valueFormatter($valueContainer, 'array');
+            $record = $valueContainer->getRecord();
+            foreach ($value as $filesGroupName => $files) {
+                if (!isset($filesGroups[$filesGroupName])) {
+                    continue;
+                }
+                $filesGroup = $filesGroups[$filesGroupName];
+                foreach ($files as $fileInfoArray) {
+                    $fileInfo = FileInfo::fromArray($fileInfoArray, $filesGroup, $record);
+                    $currentValue[$filesGroupName][$fileInfo->getUuid()] = $fileInfo;
                 }
             }
         }
 
-
-        $filesToDelete = static::getExitstingFilesToDeleteOrUpdatePositions(
-            $currentValue,
-            $valueContainer,
-            $uuidPosition,
-            $uuidsOfFilesToDelete
-        );
-
-        foreach ($column->getFilesGroupsConfigurations() as $filesGroupName => $fileConfig) {
-            $fileInfosForGroup = array_get($normaizledValue, $filesGroupName, []);
-            foreach ($fileInfosForGroup as $fileInfo) {
-                if (static::isFileInfoArray($fileInfo)) {
-                    $currentValue[$filesGroupName][] = $fileInfo;
-                }
-            }
-            if (!empty($currentValue[$filesGroupName])) {
-                $currentValue[$filesGroupName] = static::reorderGroupOfFiles($currentValue[$filesGroupName]);
-            }
-        }
-
-        return [$newFiles, $filesToDelete, $currentValue];
-    }
-
-    /**
-     * @param array $normaizledValue
-     * @return array
-     */
-    static protected function analyzeUploadedFilesAndData(array $normaizledValue) {
         $newFiles = [];
-        $uuidsOfFilesToDelete = [];
-        $uuidPosition = [];
-        foreach ($normaizledValue as $filesGroupName => $files) {
-            foreach ($files as $index => $fileInfo) {
-                if (array_key_exists('file', $fileInfo)) {
-                    $fileInfo['deleted'] = true;
-                    $newFiles[$filesGroupName][] = $fileInfo;
-                }
-                if (!empty($fileInfo['uuid'])) {
-                    if (array_get($fileInfo, 'deleted', false)) {
-                        $uuidsOfFilesToDelete[$filesGroupName][] = $fileInfo['uuid'];
-                    } else {
-                        $uuidPosition[$filesGroupName][$fileInfo['uuid']] = array_get($fileInfo, 'position', time() + (int)$index);
-                    }
-                }
-            }
-        }
-        return [$newFiles, $uuidPosition, $uuidsOfFilesToDelete];
-    }
-
-    /**
-     * @param array $currentValue
-     * @param RecordValue $valueContainer
-     * @param array $uuidPosition
-     * @param array $uuidsOfFilesToDelete
-     * @return array
-     */
-    static protected function getExitstingFilesToDeleteOrUpdatePositions(
-        array &$currentValue,
-        RecordValue $valueContainer,
-        array $uuidPosition,
-        array $uuidsOfFilesToDelete
-    ) {
         $filesToDelete = [];
-        if (!empty($currentValue)) {
-            foreach ($currentValue as $filesGroupName => $existingFiles) {
-                $removedIndexes = [];
-                foreach ((array)$existingFiles as $index => $fileData) {
-                    $uuid = static::getFileUuid($filesGroupName, $fileData, $valueContainer);
-                    if (in_array($uuid, array_get($uuidsOfFilesToDelete, $filesGroupName, []), true)) {
-                        $filesToDelete[$filesGroupName][] = $fileData;
-                        $removedIndexes[] = $index;
-                    } else if (array_has($uuidPosition, "{$filesGroupName}.{$uuid}")) {
-                        $currentValue[$filesGroupName][$index]['position'] = $uuidPosition[$filesGroupName][$uuid];
-                    }
-                }
-                foreach ($removedIndexes as $index) {
-                    unset($currentValue[$filesGroupName][$index]);
+        $updatedValue = [];
+
+        foreach ($filesGroups as $filesGroupName => $fileConfig) {
+            $notDeletedUuids = [];
+            $newValuesForGroup = array_get($normaizledValue, $filesGroupName) ?: [];
+            /** @var FileInfo[] $currentValuesForGroup */
+            $currentValuesForGroup = array_get($currentValue, $filesGroupName) ?: [];
+            foreach ($newValuesForGroup as $index => $newValue) {
+                if ($newValue instanceof UploadedTempFileInfo) {
+                    // new file
+                    $fileInfo = $newValue->toFileInfo($fileConfig, $valueContainer->getRecord(), static::makeSuffix($index));
+                    $updatedValue[$filesGroupName][] = $fileInfo->collectFileInfoForDb();
+                    $newFiles[$filesGroupName][] = $fileInfo;
+                } else if (isset($newValue['uuid'], $currentValuesForGroup[$newValue['uuid']])) {
+                    // existing file
+                    $notDeletedUuids[$newValue['uuid']] = $newValue['uuid'];
+                    $updatedValue[$filesGroupName][] = $currentValuesForGroup[$newValue['uuid']]->collectFileInfoForDb();
                 }
             }
+            if (empty($updatedValue[$filesGroupName])) {
+                $updatedValue[$filesGroupName] = [];
+            }
+            $deletedFiles = array_diff_key($currentValuesForGroup, $notDeletedUuids);
+            if (count($deletedFiles) > 0) {
+                $filesToDelete[$filesGroupName] = $deletedFiles;
+            }
         }
-        return $filesToDelete;
+
+        return [$newFiles, $filesToDelete, $updatedValue];
     }
 
     /**
-     * @param array $fileData
+     * @param array $fileInfoArray
      * @param RecordValue $valueContainer
-     * @param $fileName
+     * @param $filesGroupName
      * @return mixed
      */
-    static protected function getFileUuid($fileName, array $fileData, RecordValue $valueContainer) {
-        return array_get($fileData, 'uuid', function () use ($fileName, $fileData, $valueContainer) {
+    static protected function getFileUuid($filesGroupName, array $fileInfoArray, RecordValue $valueContainer) {
+        return array_get($fileInfoArray, 'uuid', function () use ($filesGroupName, $fileInfoArray, $valueContainer) {
             /** @var FilesColumn $column */
             $column = $valueContainer->getColumn();
             return FileInfo::fromArray(
-                    $fileData,
-                    $column->getFilesGroupConfiguration($fileName),
+                    $fileInfoArray,
+                    $column->getFilesGroupConfiguration($filesGroupName),
                     $valueContainer->getRecord()
                 )
                 ->getUuid();
@@ -190,7 +134,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
         if ($isFromDb && !is_array($value)) {
             $value = json_decode($value, true);
         }
-        if (!is_array($value)) {
+        if (!is_array($value) || empty($value)) {
             return [];
         }
         $filesGroups = $column->getFilesGroupsConfigurations();
@@ -239,15 +183,21 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
             if (is_string($fileInfo) && strlen($fileInfo) > 3) {
                 /** @noinspection SubStrUsedAsStrPosInspection */
                 if ($fileInfo[0] === '{') {
+                    // FileInfo array
                     $fileInfoArray = json_decode($fileInfo, true);
                     if (!static::isFileInfoArray($fileInfoArray)) {
                         continue;
                     }
                     $normailzedData[] = $fileInfoArray;
+                } else if (preg_match('%^uuid:(.*)$%', $fileInfo, $matches)) {
+                    // existing file UUID
+                    $normailzedData[] = [
+                        'uuid' => $matches[1]
+                    ];
                 } else {
                     $normailzedData[] = new UploadedTempFileInfo($fileInfo, false);
                 }
-            } else if ($fileInfo instanceof UploadedTempFileInfo || static::isFileInfoArray($fileInfo)) {
+            } else if ($fileInfo instanceof UploadedTempFileInfo || static::isFileInfoArray($fileInfo) || array_has($fileInfo, 'uuid')) {
                 $normailzedData[] = $fileInfo;
             }
         }
@@ -274,6 +224,9 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
         $errors = [];
         $filesGroups = $column->getFilesGroupsConfigurations();
         foreach ($filesGroups as $filesGroupName => $fileConfig) {
+            if (empty($value[$filesGroupName])) {
+                continue;
+            }
             foreach ($value[$filesGroupName] as $idx => $fileUploadOrFileInfo) {
                 if (is_array($fileUploadOrFileInfo)) {
                     // existing file info
@@ -337,36 +290,6 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
     }
 
     /**
-     * @param array $fileUpload
-     * @return \Illuminate\Http\UploadedFile
-     */
-    static protected function makeUploadedFileFromArray(array $fileUpload) {
-        return new \Illuminate\Http\UploadedFile(
-            $fileUpload['tmp_name'],
-            array_get($fileUpload, 'name'),
-            array_get($fileUpload, 'type'),
-            array_get($fileUpload, 'size'),
-            array_get($fileUpload, 'error'),
-            true
-        );
-    }
-
-    /**
-     * @param \SplFileInfo $fileInfo
-     * @return \Illuminate\Http\UploadedFile
-     */
-    static protected function makeUploadedFileFromSplFileInfo(\SplFileInfo $fileInfo) {
-        return new \Illuminate\Http\UploadedFile(
-            $fileInfo->getFilename(),
-            $fileInfo->getFilename(),
-            null,
-            $fileInfo->getSize(),
-            null,
-            true
-        );
-    }
-
-    /**
      * @param array $value
      * @return bool
      */
@@ -388,107 +311,61 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
             return;
         }
 
-        /** @var FilesColumn $column */
+        /** @var AsyncFilesColumn $column */
         $column = $valueContainer->getColumn();
         $record = $valueContainer->getRecord();
-        $deletedFiles = (array)array_get($updates, 'delete', []);
-        foreach ($deletedFiles as $filesGroupName => $files) {
-            $fileConfig = $column->getFilesGroupConfiguration($filesGroupName);
-            foreach ((array)$files as $fileInfo) {
-                $existingFileInfo = FileInfo::fromArray($fileInfo, $fileConfig, $record);
-                static::deleteExistingFiles($existingFileInfo);
-            }
-        }
+        $configGroups = $column->getFilesGroupsConfigurations();
 
-        // cleanup files that no longer exist in file system and their modifications (in case of images)
-        $newValue = $valueContainer->getValue();
-        if (is_string($newValue)) {
-            $newValue = json_decode($valueContainer->getValue(), true) ?: [];
-        }
-        foreach ($newValue as $filesGroupName => $existingFiles) {
-            $indexesToRemove = [];
-            $filesGroupConfig = $column->getFilesGroupConfiguration($filesGroupName);
-            foreach ((array)$existingFiles as $index => $fileInfo) {
-                if (!static::isFileInfoArray($fileInfo)) {
-                    $indexesToRemove[] = $index;
-                } else {
-                    $fileInfo = FileInfo::fromArray($fileInfo, $filesGroupConfig, $record);
-                    if (!$fileInfo->exists()) {
-                        static::deleteExistingFiles($fileInfo); //< to make sure there is no file and its modification remain
-                        $indexesToRemove[] = $index;
-                    }
+        // delete files
+        $deletedFiles = (array)array_get($updates, 'delete', []);
+        if (!empty($deletedFiles)) {
+            /** @var FileInfo[] $files */
+            foreach ($deletedFiles as $filesGroupName => $files) {
+                foreach ((array)$files as $fileInfo) {
+                    static::deleteExistingFile($fileInfo);
                 }
             }
-            foreach ($indexesToRemove as $index) {
-                unset($newValue[$filesGroupName][$index]);
-            }
-            $newValue[$filesGroupName] = static::limitFilesCount($newValue[$filesGroupName], $filesGroupConfig, $record);
         }
 
+        // cleanup empty dirs
+        $currentValue = static::valueFormatter($valueContainer, 'array');
+        foreach ($configGroups as $filesGroupName => $filesGroupConfig) {
+            if (empty($currentValue[$filesGroupName])) {
+                \File::cleanDirectory($filesGroupConfig->getAbsolutePathToFileFolder($record));
+            }
+        }
+
+        // save new files
         $newFiles = (array)array_get($updates, 'new', []);
         if (!empty($newFiles)) {
-            /** @var array $fileUploads */
+            /** @var FileInfo[] $fileUploads */
             foreach ($newFiles as $filesGroupName => $fileUploads) {
-                if (empty($newValue[$filesGroupName])) {
-                    $newValue[$filesGroupName] = [];
-                }
-                $filesGroupConfig = $column->getFilesGroupConfiguration($filesGroupName);
                 $newValue[$filesGroupName] = static::storeUploadedFiles(
                     $record,
-                    $filesGroupConfig,
-                    $fileUploads,
-                    $newValue[$filesGroupName]
+                    $configGroups[$filesGroupName],
+                    $fileUploads
                 );
-                if (empty($newValue[$filesGroupName])) {
-                    unset($newValue[$filesGroupName]);
-                } else {
-                    $newValue[$filesGroupName] = static::reorderGroupOfFiles($newValue[$filesGroupName]);
-                }
-                $newValue[$filesGroupName] = static::limitFilesCount($newValue[$filesGroupName], $filesGroupConfig, $record);
             }
         }
-
-        $record
-            ->unsetValue($valueContainer->getColumn()) //< to avoid merging
-            ->begin()
-            ->updateValue($valueContainer->getColumn(), $newValue, false)
-            ->commit();
-    }
-
-    /**
-     * @param array $filesInfos
-     * @param FileConfigInterface $fileConfig
-     * @param RecordInterface $record
-     * @return array
-     */
-    static protected function limitFilesCount(array $filesInfos, FileConfigInterface $fileConfig, RecordInterface $record) {
-        while (count($filesInfos) > $fileConfig->getMaxFilesCount()) {
-            static::deleteExistingFiles(FileInfo::fromArray(array_shift($filesInfos), $fileConfig, $record));
-        }
-        return array_values($filesInfos);
     }
 
     /**
      * @param FileInfo $fileInfo
      */
-    static protected function deleteExistingFiles(FileInfo $fileInfo) {
+    static protected function deleteExistingFile(FileInfo $fileInfo) {
         \File::delete($fileInfo->getAbsoluteFilePath());
     }
 
     /**
      * @param RecordInterface $record
      * @param FileConfigInterface $fileConfig
-     * @param array $fileUploads
-     * @param array $existingFiles
-     * @return array
+     * @param FileInfo[] $fileUploads
      */
     static protected function storeUploadedFiles(
         RecordInterface $record,
         FileConfigInterface $fileConfig,
-        array $fileUploads,
-        array $existingFiles
+        array $fileUploads
     ) {
-        $baseSuffix = time();
         $dir = $fileConfig->getAbsolutePathToFileFolder($record);
         if ($fileConfig->getMaxFilesCount() === 1) {
             \File::cleanDirectory($dir);
@@ -496,35 +373,16 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
         if (!\File::isDirectory($dir)) {
             \File::makeDirectory($dir, 0777, true);
         }
-        $filesSaved = 0;
-        foreach ($fileUploads as $uploadInfo) {
-            $file = array_get($uploadInfo, 'file', false);
-            if (!empty($file)) {
-                $fileInfo = FileInfo::fromSplFileInfo($file, $fileConfig, $record, (string)$baseSuffix . (string)$filesSaved);
-                $fileInfo->setPosition(array_get($uploadInfo, 'position', time() + $filesSaved));
-                $fileInfo->setCustomInfo(array_get($uploadInfo, 'info', []));
-                $filesSaved++;
-                // save not modified file to $dir
-                $filePath = $file->getRealPath();
-                if ($file instanceof SymfonyUploadedFile) {
-                    if (is_uploaded_file($filePath)) {
-                        $file->move($dir, $fileInfo->getFileNameWithExtension());
-                    } else {
-                        \File::copy($filePath, $dir . $fileInfo->getFileNameWithExtension());
-                    }
-                } else {
-                    /** @var \SplFileInfo $file */
-                    \File::copy($filePath, $dir . $fileInfo->getFileNameWithExtension());
-                }
-                // modify file
-                static::modifyUploadedFileAfterSaveToFs($fileInfo, $fileConfig);
-                $existingFiles[] = $fileInfo->collectImageInfoForDb();
-            }
+        foreach ($fileUploads as $fileInfo) {
+            // save not modified file to $dir
+            \File::copy($fileInfo->getUploadedFilePath(), $dir . $fileInfo->getFileNameWithExtension());
+            // modify file
+            static::modifyUploadedFileAfterSaveToFs($fileInfo, $fileConfig);
         }
-        if (empty($existingFiles)) {
-            \File::cleanDirectory($dir);
-        }
-        return $existingFiles;
+    }
+
+    static protected function makeSuffix(string $fileIndex): string {
+        return time() . $fileIndex;
     }
 
     /**
@@ -535,23 +393,6 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      */
     static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
 
-    }
-
-    /**
-     * @param array $filesInfos
-     * @return array
-     */
-    static protected function reorderGroupOfFiles(array $filesInfos) {
-        usort($filesInfos, function ($item1, $item2) {
-            $pos1 = (int)array_get($item1, 'position', time() + 100);
-            $pos2 = (int)array_get($item2, 'position', time() + 101);
-            if ($pos1 === $pos2) {
-                return 0;
-            } else {
-                return $pos1 > $pos2 ? 1 : -1;
-            }
-        });
-        return array_values($filesInfos);
     }
 
     /**
@@ -591,7 +432,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
                 function () use ($valueContainer, $format, $column) {
                     // return FileInfo object or array of FileInfo objects by image config name provided via $format
                     $record = $valueContainer->getRecord();
-                    $value = $record->getValue($column->getName(), 'array');
+                    $value = static::valueFormatter($valueContainer, 'array');
                     $fileConfig = $column->getFilesGroupConfiguration($format);
                     $ret = [];
                     if (!empty($value[$format]) && is_array($value[$format])) {

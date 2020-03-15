@@ -10,12 +10,17 @@ class ModifiedImageInfo extends FileInfo {
 
     /**
      * @param \SplFileInfo $fileInfo
-     * @param FileConfig|FilesGroupConfig $fileConfig
+     * @param FileConfig|FilesGroupConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @param null|string $fileSuffix
      * @return ModifiedImageInfo
      */
-    static public function fromSplFileInfo(\SplFileInfo $fileInfo, FileConfig $fileConfig, RecordInterface $record, $fileSuffix = null) {
+    static public function fromSplFileInfo(
+        \SplFileInfo $fileInfo,
+        FileConfigInterface $fileConfig,
+        RecordInterface $record,
+        ?string $fileSuffix = null
+    ) {
         /** @var ModifiedImageInfo $obj */
         $obj = parent::fromSplFileInfo($fileInfo, $fileConfig, $record, $fileSuffix);
         $obj->setFilePath($fileInfo->getRealPath());

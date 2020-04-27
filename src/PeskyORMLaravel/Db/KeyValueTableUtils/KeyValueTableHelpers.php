@@ -181,7 +181,7 @@ trait KeyValueTableHelpers {
             $conditions[$fkName] = $data[$fkName];
         }
         /** @var Record $object */
-        $object = static::getInstance()->newRecord()->fromDb($conditions);
+        $object = static::getInstance()->newRecord()->fetch($conditions);
         if ($object->existsInDb()) {
             $success = $object
                 ->begin()

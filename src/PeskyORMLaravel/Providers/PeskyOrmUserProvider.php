@@ -49,7 +49,7 @@ class PeskyOrmUserProvider implements UserProvider {
             return null;
         }
         /** @var RecordInterface $user */
-        $user = $this->createEmptyUserRecord()->fromPrimaryKey($identifier, [], $this->getRelationsToFetch());
+        $user = $this->createEmptyUserRecord()->fetchByPrimaryKey($identifier, [], $this->getRelationsToFetch());
 
         return $this->validateUser($user, null);
     }
@@ -68,7 +68,7 @@ class PeskyOrmUserProvider implements UserProvider {
         }
         $userRecord = $this->createEmptyUserRecord();
         /** @var RecordInterface $user */
-        $user = $userRecord->fromDb([
+        $user = $userRecord->fetch([
             $userRecord->getAuthIdentifierName() => $identifier,
             $userRecord->getRememberTokenName() => $token,
         ], [], $this->getRelationsToFetch());
@@ -155,7 +155,7 @@ class PeskyOrmUserProvider implements UserProvider {
                 $conditions[$key] = $value;
             }
         }
-        $user = $this->createEmptyUserRecord()->fromDb($conditions, [], $this->getRelationsToFetch());
+        $user = $this->createEmptyUserRecord()->fetch($conditions, [], $this->getRelationsToFetch());
 
         return $this->validateUser($user, null);
     }

@@ -26,7 +26,7 @@ trait KeyValueRecordHelpers {
      * @throws \PeskyORM\Exception\OrmException
      * @throws \UnexpectedValueException
      */
-    protected function cleanCacheAfterSave($isCreated) {
+    protected function cleanCacheAfterSave(bool $isCreated) {
         $this->cleanCacheAfterDelete();
     }
 

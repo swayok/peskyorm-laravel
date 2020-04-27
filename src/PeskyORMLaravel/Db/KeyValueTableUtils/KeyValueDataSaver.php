@@ -97,7 +97,7 @@ class KeyValueDataSaver extends Record {
         parent::saveToDb($columnsToSave);
     }
 
-    protected function collectValuesForSave(array &$columnsToSave, $isUpdate) {
+    protected function collectValuesForSave(array &$columnsToSave, bool $isUpdate): array {
         $data = [];
         foreach ($columnsToSave as $columnName) {
             $column = static::getColumn($columnName);
@@ -110,14 +110,14 @@ class KeyValueDataSaver extends Record {
         return $data;
     }
 
-    protected function performDataSave($isUpdate, array $data) {
+    protected function performDataSave(bool $isUpdate, array $data): bool {
         $table = static::$originalTable;
         $alreadyInTransaction = $table::inTransaction();
         if (!$alreadyInTransaction) {
             $table::beginTransaction();
         }
         try {
-            $success = $table->updateOrCreateRecords(
+            $success = $table::updateOrCreateRecords(
                 $table::convertToDataForRecords($data, $this->_fkValue, $this->_constantAdditionalData)
             );
             if (!$alreadyInTransaction) {
@@ -136,15 +136,15 @@ class KeyValueDataSaver extends Record {
         }
     }
 
-    protected function getAllColumnsWithUpdatableValues() {
+    protected function getAllColumnsWithUpdatableValues(): array {
         return array_keys(static::getColumns());
     }
 
-    public function existsInDb($useDbQuery = false) {
+    public function existsInDb(bool $useDbQuery = false): bool {
         return true;
     }
 
-    protected function _existsInDbViaQuery() {
+    protected function _existsInDbViaQuery(): bool {
         return true;
     }
 

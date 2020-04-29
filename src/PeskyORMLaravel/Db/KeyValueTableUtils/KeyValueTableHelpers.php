@@ -141,10 +141,10 @@ trait KeyValueTableHelpers {
      * @param string $keysColumn
      * @param string $valuesColumn
      * @param array $conditions
-     * @param \Closure $configurator
+     * @param \Closure|null $configurator
      * @return array
      */
-    static public function selectAssoc($keysColumn = null, $valuesColumn = null, array $conditions = [], \Closure $configurator = null) {
+    static public function selectAssoc($keysColumn = null, $valuesColumn = null, array $conditions = [], ?\Closure $configurator = null) {
         if ($keysColumn === null) {
             $keysColumn = static::getKeysColumnName();
         }

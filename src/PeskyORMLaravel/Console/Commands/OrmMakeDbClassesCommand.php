@@ -8,6 +8,7 @@ use PeskyORM\ORM\ClassBuilder;
 use PeskyORM\ORM\Record;
 use PeskyORM\ORM\Table;
 use PeskyORM\ORM\TableStructure;
+use PeskyORMLaravel\Db\OrmDbClassesUtils;
 
 class OrmMakeDbClassesCommand extends Command {
 
@@ -41,7 +42,7 @@ class OrmMakeDbClassesCommand extends Command {
     }
 
     protected function getClassBuilderClass() {
-        return config('peskyorm.class_builder', ClassBuilder::class);
+        return OrmDbClassesUtils::getClassBuilderClass();
     }
 
     /**
@@ -79,12 +80,7 @@ class OrmMakeDbClassesCommand extends Command {
         ) {
             return;
         }
-        /** @var ClassBuilder $builder */
-        $builderClass = $this->getClassBuilderClass();
-        $builder = new $builderClass(
-            $tableName,
-            $connection
-        );
+        $builder = OrmDbClassesUtils::getClassBuilder($tableName, $connection);
         $builder->setDbSchemaName($schemaName);
 
         $only = $this->option('only');
@@ -112,11 +108,11 @@ class OrmMakeDbClassesCommand extends Command {
 
     protected function preapareAndGetDataForViews() {
         $tableName = $this->argument('table_name');
-        $namespace = $this->buildNamespaceForClasses($tableName);
+        $namespace = OrmDbClassesUtils::getNamespaceForOrmDbClassesByTableName($tableName);
         /** @var ClassBuilder $builderClass */
-        $builderClass = $this->getClassBuilderClass();
+        $builderClass = OrmDbClassesUtils::getClassBuilderClass();
         $dataForViews = [
-            'folder' => $this->getFolder($tableName, $namespace),
+            'folder' => OrmDbClassesUtils::getFolderPathForOrmDbClassesByTableName($tableName),
             'table' => $tableName,
             'namespace' => $namespace,
             'table_class_name' => $builderClass::makeTableClassName($tableName),
@@ -130,19 +126,6 @@ class OrmMakeDbClassesCommand extends Command {
             \File::makeDirectory($dataForViews['folder'], 0755, true);
         }
         return $dataForViews;
-    }
-
-    protected function buildNamespaceForClasses($tableName) {
-        /** @var ClassBuilder $builderClass */
-        $builderClass = $this->getClassBuilderClass();
-        return trim(config('peskyorm.classes_namespace', 'App\\Db'), ' \\') . '\\' . $builderClass::convertTableNameToClassName($tableName);
-    }
-
-    protected function getFolder($tableName, $namespace) {
-        /** @var ClassBuilder $builderClass */
-        $builderClass = $this->getClassBuilderClass();
-        $basePath = config('peskyorm.classes_path', app_path('Db'));
-        return $basePath . DIRECTORY_SEPARATOR . $builderClass::convertTableNameToClassName($tableName) . DIRECTORY_SEPARATOR;
     }
 
     protected function createTableClassFile(ClassBuilder $builder, array $info, $overwrite) {

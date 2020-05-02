@@ -6,6 +6,7 @@ namespace PeskyORMLaravel\Db\KeyValueTableUtils;
 use PeskyORM\Core\DbExpr;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\Record;
+use PeskyORM\ORM\RecordInterface;
 use PeskyORM\ORM\Relation;
 use PeskyORM\ORM\TableInterface;
 use PeskyORM\ORM\TableStructureInterface;
@@ -20,14 +21,14 @@ trait KeyValueTableHelpers {
 
     private $_detectedMainForeignKeyColumnName;
 
-    static public function getKeysColumnName() {
+    static public function getKeysColumnName(): string {
         return 'key';
     }
 
-    static public function getValuesColumnName() {
+    static public function getValuesColumnName(): string {
         return 'value';
     }
-
+    
     /**
      * Override if you wish to provide key manually
      * @return string|null - null returned when there is no foreign key
@@ -35,7 +36,7 @@ trait KeyValueTableHelpers {
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
      */
-    public function getMainForeignKeyColumnName() {
+    public function getMainForeignKeyColumnName(): ?string {
         /** @var KeyValueTableInterface $this */
         if (empty($this->_detectedMainForeignKeyColumnName)) {
             foreach ($this->getTableStructure()->getRelations() as $relationConfig) {
@@ -54,20 +55,20 @@ trait KeyValueTableHelpers {
     }
 
     /**
-     * @param null $foreignKeyValue
+     * @param mixed $foreignKeyValue
      * @return null|string
      */
-    static public function getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue = null) {
+    static public function getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue = null): ?string {
         return null;
     }
 
     /**
      * @return int - minutes
      */
-    static public function getCacheDurationForAllValues() {
+    static public function getCacheDurationForAllValues(): int {
         return 10;
     }
-
+    
     /**
      * Make array that represents DB record and can be saved to DB
      * @param string $key
@@ -75,7 +76,7 @@ trait KeyValueTableHelpers {
      * @param mixed $foreignKeyValue
      * @return array
      */
-    static public function makeDataForRecord($key, $value, $foreignKeyValue = null) {
+    static public function makeDataForRecord(string $key, $value, $foreignKeyValue = null): array {
         $record = [
             static::getKeysColumnName() => $key,
             static::getValuesColumnName() => static::encodeValue($value),
@@ -87,17 +88,17 @@ trait KeyValueTableHelpers {
     }
 
     /**
-     * @param int|float|string|array $value
+     * @param mixed $value
      * @return string
      */
-    static public function encodeValue($value) {
+    static public function encodeValue($value): string {
         if ($value instanceof DbExpr) {
             return $value;
         } else {
             return NormalizeValue::normalizeJson($value);
         }
     }
-
+    
     /**
      * Convert associative array to arrays that represent DB record and are ready for saving to DB
      * @param array $settingsAssoc - associative array of settings
@@ -105,7 +106,11 @@ trait KeyValueTableHelpers {
      * @param array $additionalConstantValues - contains constant values for all records (for example: admin id)
      * @return array
      */
-    static public function convertToDataForRecords(array $settingsAssoc, $foreignKeyValue = null, $additionalConstantValues = []) {
+    static public function convertToDataForRecords(
+        array $settingsAssoc,
+        $foreignKeyValue = null,
+        array $additionalConstantValues = []
+    ): array {
         $records = [];
         foreach ($settingsAssoc as $key => $value) {
             $records[] = array_merge(
@@ -138,13 +143,18 @@ trait KeyValueTableHelpers {
 
     /**
      * Update: added values decoding
-     * @param string $keysColumn
-     * @param string $valuesColumn
+     * @param string|null $keysColumn
+     * @param string|null $valuesColumn
      * @param array $conditions
      * @param \Closure|null $configurator
      * @return array
      */
-    static public function selectAssoc($keysColumn = null, $valuesColumn = null, array $conditions = [], ?\Closure $configurator = null) {
+    static public function selectAssoc(
+        ?string $keysColumn = null,
+        ?string $valuesColumn = null,
+        array $conditions = [],
+        ?\Closure $configurator = null
+    ): array {
         if ($keysColumn === null) {
             $keysColumn = static::getKeysColumnName();
         }
@@ -153,14 +163,14 @@ trait KeyValueTableHelpers {
         }
         return static::decodeValues(parent::selectAssoc($keysColumn, $valuesColumn, $conditions, $configurator));
     }
-
+    
     /**
      * Update existing value or create new one
      * @param array $data - must contain: key, foreign_key, value
      * @return Record
      * @throws \InvalidArgumentException
      */
-    static public function updateOrCreateRecord(array $data) {
+    static public function updateOrCreateRecord(array $data): RecordInterface {
         if (empty($data[static::getKeysColumnName()])) {
             throw new \InvalidArgumentException(
                 '$record argument does not contain value for key \'' . static::getKeysColumnName() . '\' or its value is empty'
@@ -196,13 +206,13 @@ trait KeyValueTableHelpers {
         static::cleanCachedValues(empty($fkName) ? null : $data[$fkName]);
         return $success;
     }
-
+    
     /**
      * Update existing values and create new
      * @param array $records
      * @return bool
      */
-    static public function updateOrCreateRecords(array $records) {
+    static public function updateOrCreateRecords(array $records): bool {
         $table = static::getInstance();
         $alreadyInTransaction = $table::inTransaction();
         if (!$alreadyInTransaction) {
@@ -230,7 +240,7 @@ trait KeyValueTableHelpers {
             throw $exc;
         }
     }
-
+    
     /**
      * @param string $key
      * @param mixed $foreignKeyValue - use null if there is no main foreign key column and
@@ -239,10 +249,10 @@ trait KeyValueTableHelpers {
      * @param bool $ignoreEmptyValue
      *      - true: if value recorded to DB is empty - returns $default
      *      - false: returns any value from DB if it exists
-     * @return array
+     * @return mixed
      * @throws \InvalidArgumentException
      */
-    static public function getValue($key, $foreignKeyValue = null, $default = null, $ignoreEmptyValue = false) {
+    static public function getValue(string $key, $foreignKeyValue = null, $default = null, bool $ignoreEmptyValue = false) {
         return static::getFormattedValue($key, null, $foreignKeyValue, $default, $ignoreEmptyValue);
     }
 
@@ -255,10 +265,16 @@ trait KeyValueTableHelpers {
      * @param bool $ignoreEmptyValue
      *      - true: if value recorded to DB is empty - returns $default
      *      - false: returns any value from DB if it exists
-     * @return mixed|null
+     * @return mixed
      * @throws \InvalidArgumentException
      */
-    static public function getFormattedValue($key, $format, $foreignKeyValue = null, $default = null, $ignoreEmptyValue = false) {
+    static public function getFormattedValue(
+        string $key,
+        ?string $format,
+        $foreignKeyValue = null,
+        $default = null,
+        bool $ignoreEmptyValue = false
+    ) {
         $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
         $table = static::getInstance();
         if (!empty($cacheKey)) {
@@ -315,14 +331,14 @@ trait KeyValueTableHelpers {
         return ($ignoreEmptyValue && static::isEmptyValue($value)) ? $default : $value;
     }
 
-    static private function isEmptyValue($value) {
+    static private function isEmptyValue($value): bool {
         return (
             $value === null
             || (is_string($value) && ($value === '' || $value === '[]' || $value === '{}' || $value === '""'))
             || (is_array($value) && count($value) === 0)
         );
     }
-
+    
     /**
      * @param mixed $foreignKeyValue
      * @param bool $ignoreCache
@@ -332,7 +348,7 @@ trait KeyValueTableHelpers {
      * @return array
      * @throws \InvalidArgumentException
      */
-    static public function getValuesForForeignKey($foreignKeyValue = null, $ignoreCache = false, $ignoreEmptyValues = false) {
+    static public function getValuesForForeignKey($foreignKeyValue = null, bool $ignoreCache = false, bool $ignoreEmptyValues = false): array {
         if (!$ignoreCache) {
             $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
             if (!empty($cacheKey)) {

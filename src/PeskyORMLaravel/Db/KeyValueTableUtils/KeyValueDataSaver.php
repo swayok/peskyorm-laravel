@@ -136,7 +136,7 @@ class KeyValueDataSaver extends Record {
         }
     }
 
-    protected function getAllColumnsWithUpdatableValues(): array {
+    protected function getColumnsNamesWithUpdatableValues(): array {
         return array_keys(static::getColumns());
     }
 

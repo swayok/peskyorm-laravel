@@ -140,18 +140,18 @@ trait KeyValueTableHelpers {
     static public function decodeValue($encodedValue) {
         return is_array($encodedValue) ? $encodedValue : json_decode($encodedValue, true);
     }
-
+    
     /**
      * Update: added values decoding
-     * @param string|null $keysColumn
-     * @param string|null $valuesColumn
+     * @param string|null|DbExpr $keysColumn
+     * @param string|null|DbExpr $valuesColumn
      * @param array $conditions
      * @param \Closure|null $configurator
      * @return array
      */
     static public function selectAssoc(
-        ?string $keysColumn = null,
-        ?string $valuesColumn = null,
+        $keysColumn = null,
+        $valuesColumn = null,
         array $conditions = [],
         ?\Closure $configurator = null
     ): array {

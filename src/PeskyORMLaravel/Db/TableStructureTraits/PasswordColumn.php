@@ -9,8 +9,12 @@ use PeskyORM\ORM\RecordValue;
 trait PasswordColumn {
 
     private function password() {
+        return static::createPasswordColumn()
+            ->disallowsNullValues();
+    }
+    
+    static public function createPasswordColumn() {
         return Column::create(Column::TYPE_PASSWORD)
-            ->disallowsNullValues()
             ->convertsEmptyStringToNull()
             ->setValuePreprocessor(function ($value, $isDbValue, Column $column) {
                 $value = DefaultColumnClosures::valuePreprocessor($value, $isDbValue, $column);
@@ -31,11 +35,7 @@ trait PasswordColumn {
             ->privateValue();
     }
 
-    /**
-     * @param string $plainPassword
-     * @return string
-     */
-    static protected function hashPassword($plainPassword) {
+    static public function hashPassword(string $plainPassword): string {
         return \Hash::make($plainPassword);
     }
 

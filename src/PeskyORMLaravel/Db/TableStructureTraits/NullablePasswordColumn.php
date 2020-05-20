@@ -8,28 +8,9 @@ use PeskyORM\ORM\RecordValue;
 
 trait NullablePasswordColumn {
 
-    use PasswordColumn;
-
     private function password() {
-        return Column::create(Column::TYPE_PASSWORD)
-            ->convertsEmptyStringToNull()
-            ->setValuePreprocessor(function ($value, $isDbValue, Column $column) {
-                $value = DefaultColumnClosures::valuePreprocessor($value, $isDbValue, $column);
-                if ($isDbValue) {
-                    return $value;
-                } else if (!empty($value)) {
-                    return static::hashPassword($value);
-                } else {
-                    return $value;
-                }
-            })
-            ->setValueSetter(function ($newValue, $isFromDb, RecordValue $valueContainer, $trustDataReceivedFromDb) {
-                if (!$isFromDb && ($newValue === null || (is_string($newValue) && trim($newValue) === ''))) {
-                    return;
-                }
-                DefaultColumnClosures::valueSetter($newValue, $isFromDb, $valueContainer, $trustDataReceivedFromDb);
-            })
-            ->privateValue();
+        return PasswordColumn::createPasswordColumn()
+            ->allowsNullValues();
     }
 
 }

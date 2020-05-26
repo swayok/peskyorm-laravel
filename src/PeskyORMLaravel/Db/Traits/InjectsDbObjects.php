@@ -7,7 +7,11 @@ use PeskyORM\ORM\RecordInterface;
 
 trait InjectsDbObjects {
 
-    protected function injectOnlyActiveNotSoftdeletedObjects() {
+    protected function injectOnlyActiveObjects() {
+        return true;
+    }
+    
+    protected function injectOnlyNotSoftDeletedObjects() {
         return true;
     }
 
@@ -41,9 +45,7 @@ trait InjectsDbObjects {
                 $object::getTable()->getPkColumnName() => $id,
             ];
             $this->addConditionsForDbObjectInjection($route, $object, $conditions);
-            if ($this->injectOnlyActiveNotSoftdeletedObjects()) {
-                $this->addIsActiveAndIsDeletedConditionsForDbObjectInjection($route, $object, $conditions);
-            }
+            $this->addIsActiveAndIsDeletedConditionsForDbObjectInjection($route, $object, $conditions);
             $this->addParentIdsConditionsForDbObjectInjection($route, $object, $conditions);
             $object->fetch($conditions, $this->getColumnsListForDbObjectInjection($object));
             if (!$object->existsInDb()) {
@@ -78,11 +80,15 @@ trait InjectsDbObjects {
      * @param array $conditions
      */
     protected function addIsActiveAndIsDeletedConditionsForDbObjectInjection(Route $route, RecordInterface $object, array &$conditions) {
-        if ($object::getTable()->getTableStructure()->hasColumn('is_active')) {
-            $conditions['is_active'] = (bool)$route->parameter('is_active', true);
+        if ($this->injectOnlyActiveObjects()) {
+            if ($object::getTable()->getTableStructure()->hasColumn('is_active')) {
+                $conditions['is_active'] = (bool)$route->parameter('is_active', true);
+            }
         }
-        if ($object::getTable()->getTableStructure()->hasColumn('is_deleted')) {
-            $conditions['is_deleted'] = (bool)$route->parameter('is_deleted', false);
+        if ($this->injectOnlyNotSoftDeletedObjects()) {
+            if ($object::getTable()->getTableStructure()->hasColumn('is_deleted')) {
+                $conditions['is_deleted'] = (bool)$route->parameter('is_deleted', false);
+            }
         }
     }
 

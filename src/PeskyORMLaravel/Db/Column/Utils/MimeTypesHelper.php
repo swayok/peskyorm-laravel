@@ -120,40 +120,27 @@ abstract class MimeTypesHelper {
         self::GZIP => self::TYPE_ARCHIVE,
     ];
 
-    /**
-     * @return array
-     */
-    static public function getMimeTypesAliases() {
+    static public function getMimeTypesAliases(): array {
         return static::$mimeTypesAliases;
     }
 
-    /**
-     * @return array
-     */
-    static public function getMimeTypesToFileTypes() {
+    static public function getMimeTypesToFileTypes(): array {
         return static::$mimeTypeToFileType;
     }
 
-    /**
-     * @return array
-     */
-    static public function getMimeTypesToFileExtensions() {
+    static public function getMimeTypesToFileExtensions(): array {
         return static::$mimeToExt;
     }
 
-    /**
-     * @param string $mimeType
-     * @return string|null
-     */
-    static public function getExtensionForMimeType($mimeType) {
+    static public function getExtensionForMimeType(string $mimeType): ?string {
         return isset(static::$mimeToExt[$mimeType]) ? static::$mimeToExt[$mimeType] : null;
     }
+    
+    static public function getMimeTypeForExtension(string $extension): ?string {
+        return array_get(array_flip(static::$mimeToExt), $extension, null);
+    }
 
-    /**
-     * @param string|null $mimeType
-     * @return string
-     */
-    static public function detectFileTypeByMimeType($mimeType) {
+    static public function detectFileTypeByMimeType(?string $mimeType): string {
         if (empty($mimeType) || !is_string($mimeType)) {
             return static::UNKNOWN;
         }
@@ -169,11 +156,7 @@ abstract class MimeTypesHelper {
         return static::UNKNOWN;
     }
 
-    /**
-     * @param array $mimeTypes
-     * @return array
-     */
-    static public function getAliasesForMimeTypes(array $mimeTypes) {
+    static public function getAliasesForMimeTypes(array $mimeTypes): array {
         $aliases = [];
         foreach ($mimeTypes as $fileType) {
             if (!empty(static::$mimeTypesAliases[$fileType])) {
@@ -183,4 +166,5 @@ abstract class MimeTypesHelper {
         }
         return $aliases;
     }
+    
 }

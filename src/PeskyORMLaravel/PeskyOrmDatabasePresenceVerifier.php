@@ -26,11 +26,6 @@ class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
      * @param  string $idColumn
      * @param  array $extra
      * @return int
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \PDOException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     public function getCount($tableName, $column, $value, $excludeId = null, $idColumn = null, array $extra = []) {
         if ($this->caseSensitiveModeEnabled || is_numeric($value)) {
@@ -55,11 +50,6 @@ class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
      * @param  array $values
      * @param  array $extra
      * @return int
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \PDOException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     public function getMultiCount($tableName, $column, array $values, array $extra = []) {
         $conditions = [$column => $values];
@@ -74,10 +64,6 @@ class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
     /**
      * @param string $tableName
      * @return TableInterface
-     * @throws \UnexpectedValueException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
      */
     private function getTable($tableName) {
         if (!array_key_exists($tableName, $this->tables)) {

@@ -16,8 +16,8 @@ trait PasswordColumn {
     static public function createPasswordColumn() {
         return Column::create(Column::TYPE_PASSWORD)
             ->convertsEmptyStringToNull()
-            ->setValuePreprocessor(function ($value, $isDbValue, Column $column) {
-                $value = DefaultColumnClosures::valuePreprocessor($value, $isDbValue, $column);
+            ->setValuePreprocessor(function ($value, $isDbValue, $isForValidation, Column $column) {
+                $value = DefaultColumnClosures::valuePreprocessor($value, $isDbValue, $isForValidation, $column);
                 if ($isDbValue) {
                     return $value;
                 } else if (!empty($value)) {

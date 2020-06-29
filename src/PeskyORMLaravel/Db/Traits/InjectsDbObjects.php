@@ -39,7 +39,7 @@ trait InjectsDbObjects {
                  $id = \Request::get('id', false);
             }
             if (empty($id)) {
-                $this->sendRecordNotFoundResponse();
+                $this->sendRecordNotFoundResponseForInjectedRecord();
             }
             $conditions = [
                 $object::getTable()->getPkColumnName() => $id,
@@ -49,7 +49,7 @@ trait InjectsDbObjects {
             $this->addParentIdsConditionsForDbObjectInjection($route, $object, $conditions);
             $object->fetch($conditions, $this->getColumnsListForDbObjectInjection($object));
             if (!$object->existsInDb()) {
-                $this->sendRecordNotFoundResponse();
+                $this->sendRecordNotFoundResponseForInjectedRecord();
             }
         }
     }
@@ -61,7 +61,7 @@ trait InjectsDbObjects {
     /**
      * Abort with HTTP code 404
      */
-    protected function sendRecordNotFoundResponse() {
+    protected function sendRecordNotFoundResponseForInjectedRecord() {
         abort(404, 'Record not found in DB.');
     }
 

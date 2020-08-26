@@ -83,7 +83,7 @@ class FileInfo {
     ) {
         $obj = new static($fileConfig, $record, $fileSuffix);
         if (!($fileInfo instanceof UploadedFile)) {
-            $fileInfo = new UploadedFile($fileInfo->getRealPath(), $fileInfo->getFilename(), null, $fileInfo->getSize(), null, true);
+            $fileInfo = new UploadedFile($fileInfo->getRealPath(), $fileInfo->getFilename(), null, null, true);
         }
 
         $extension = $fileInfo->getClientOriginalExtension();
@@ -334,9 +334,10 @@ class FileInfo {
         if ($file instanceof UploadedFile) {
             return $file->getMimeType() ?: $file->getClientMimeType();
         } else if ($file instanceof \SplFileInfo) {
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
             $file = $file->getRealPath();
         }
-        $file = new UploadedFile($file, 'temp.file', null, null, null, true);
+        $file = new UploadedFile($file, 'temp.file', null, null, true);
         return $file->getMimeType();
     }
 

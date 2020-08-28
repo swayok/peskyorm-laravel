@@ -141,10 +141,9 @@ class PeskyOrmUserProvider implements UserProvider {
      */
     public function updateRememberToken(UserContract $user, $token) {
         /** @var RecordInterface|Authenticatable|CmfAdmin $user */
-        $user
-            ->begin()
-            ->setRememberToken($token)
-            ->commit();
+        $user->begin();
+        $user->setRememberToken($token);
+        $user->commit();
     }
 
     /**

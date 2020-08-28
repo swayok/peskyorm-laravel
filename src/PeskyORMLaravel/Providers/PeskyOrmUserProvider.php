@@ -5,6 +5,7 @@ namespace PeskyORMLaravel\Providers;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Contracts\Auth\UserProvider;
+use PeskyCMF\Db\Admins\CmfAdmin;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
 
@@ -67,11 +68,15 @@ class PeskyOrmUserProvider implements UserProvider {
             return null;
         }
         $userRecord = $this->createEmptyUserRecord();
+        $conditions = array_merge(
+            [
+                $userRecord->getAuthIdentifierName() => $identifier,
+                $userRecord->getRememberTokenName() => $token,
+            ],
+            $this->getAdditionalConditionsForFetchOne()
+        );
         /** @var RecordInterface $user */
-        $user = $userRecord->fetch([
-            $userRecord->getAuthIdentifierName() => $identifier,
-            $userRecord->getRememberTokenName() => $token,
-        ], [], $this->getRelationsToFetch());
+        $user = $userRecord->fetch($conditions, [], $this->getRelationsToFetch());
 
         return $this->validateUser($user, null);
     }
@@ -119,6 +124,7 @@ class PeskyOrmUserProvider implements UserProvider {
             $user->existsInDb()
             && (!$user::hasColumn('is_active') || $user->getValue('is_active'))
             && (!$user::hasColumn('is_banned') || !$user->getValue('is_banned'))
+            && (!$user::hasColumn('is_deleted') || !$user->getValue('is_deleted'))
         ) {
             return $user;
         }
@@ -132,12 +138,13 @@ class PeskyOrmUserProvider implements UserProvider {
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
      * @param  string $token
      * @return void
-     * @throws \BadMethodCallException
      */
     public function updateRememberToken(UserContract $user, $token) {
-        $user->setRememberToken($token);
-        /** @var RecordInterface $user */
-        $user->save();
+        /** @var RecordInterface|Authenticatable|CmfAdmin $user */
+        $user
+            ->begin()
+            ->setRememberToken($token)
+            ->commit();
     }
 
     /**
@@ -155,9 +162,36 @@ class PeskyOrmUserProvider implements UserProvider {
                 $conditions[$key] = $value;
             }
         }
-        $user = $this->createEmptyUserRecord()->fetch($conditions, [], $this->getRelationsToFetch());
+        $user = $this->createEmptyUserRecord();
+        
+        $user->fetch(
+            array_merge($conditions, $this->getAdditionalConditionsForFetchOne()),
+            [],
+            $this->getRelationsToFetch()
+        );
 
         return $this->validateUser($user, null);
+    }
+    
+    /**
+     * Get specific conditions for user fetching by credentials or by remember token.
+     *
+     * @return array
+     */
+    public function getAdditionalConditionsForFetchOne(): array {
+        $conditions = [];
+        /** @var RecordInterface $userClass */
+        $userClass = $this->dbRecordClass;
+        if ($userClass::hasColumn('is_active')) {
+            $conditions['is_active'] = true;
+        }
+        if ($userClass::hasColumn('is_deleted')) {
+            $conditions['is_deleted'] = false;
+        }
+        if ($userClass::hasColumn('is_banned')) {
+            $conditions['is_banned'] = false;
+        }
+        return $conditions;
     }
 
     /**

@@ -156,7 +156,7 @@ class PeskyOrmUserProvider implements UserProvider {
 
         $conditions = [];
 
-        foreach ($credentials as $key => $value) {
+        foreach ($this->normalizeCredentials($credentials) as $key => $value) {
             if (!str_contains($key, 'password')) {
                 $conditions[$key] = $value;
             }
@@ -170,6 +170,13 @@ class PeskyOrmUserProvider implements UserProvider {
         );
 
         return $this->validateUser($user, null);
+    }
+    
+    protected function normalizeCredentials(array $credentials): array {
+        if (isset($credentials['email']) && is_string($credentials['email'])) {
+            $credentials['email'] = mb_strtolower($credentials['email']);
+        }
+        return $credentials;
     }
     
     /**
@@ -201,7 +208,7 @@ class PeskyOrmUserProvider implements UserProvider {
      * @return bool
      */
     public function validateCredentials(UserContract $user, array $credentials) {
-        foreach ($credentials as $columnName => $value) {
+        foreach ($this->normalizeCredentials($credentials) as $columnName => $value) {
             if (is_string($columnName) && !is_numeric($columnName)) {
                 if ($columnName === 'password') {
                     if (!\Hash::check($value, $user->getAuthPassword())) {

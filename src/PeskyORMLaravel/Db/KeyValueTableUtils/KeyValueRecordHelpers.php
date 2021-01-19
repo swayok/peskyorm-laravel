@@ -21,22 +21,18 @@ trait KeyValueRecordHelpers {
     /**
      * Clean cache related to this record after saving it's data to DB
      * @param bool $isCreated
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \UnexpectedValueException
      */
     protected function cleanCacheAfterSave(bool $isCreated) {
-        $this->cleanCacheAfterDelete();
+        parent::cleanCacheAfterSave($isCreated);
+        $this->cleanCacheOnChange();
     }
 
-    /**
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
-     * @throws \PeskyORM\Exception\OrmException
-     * @throws \UnexpectedValueException
-     */
     protected function cleanCacheAfterDelete() {
+        parent::cleanCacheAfterDelete();
+        $this->cleanCacheOnChange();
+    }
+    
+    protected function cleanCacheOnChange() {
         $fkName = static::getTable()->getMainForeignKeyColumnName();
         if ($fkName === null) {
             static::getTable()->cleanCachedValues();

@@ -2,7 +2,6 @@
 
 namespace PeskyORMLaravel\Db\Traits;
 
-use PeskyORM\Adapter\Postgres;
 use PeskyORM\Core\DbExpr;
 use PeskyORM\ORM\RecordInterface;
 use PeskyORM\ORM\TableInterface;
@@ -28,6 +27,7 @@ trait HandlesPositioningCollisions {
     }
 
     protected function afterSave(bool $isCreated, array $updatedColumns = []) {
+        parent::afterSave($isCreated, $updatedColumns);
         $this->finishPositioningCollision();
     }
 

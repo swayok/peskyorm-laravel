@@ -102,7 +102,7 @@ class KeyValueDataSaver extends Record {
         foreach ($columnsToSave as $columnName) {
             $column = static::getColumn($columnName);
             if ($column->isAutoUpdatingValue()) {
-                $data[$columnName] = static::getColumn($columnName)->getAutoUpdateForAValue();
+                $data[$columnName] = static::getColumn($columnName)->getAutoUpdateForAValue($this);
             } else if (!$column->isItPrimaryKey()) {
                 $data[$columnName] = $this->getValue($column);
             }

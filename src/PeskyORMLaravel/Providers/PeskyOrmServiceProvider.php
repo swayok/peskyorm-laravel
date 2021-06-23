@@ -20,6 +20,7 @@ class PeskyOrmServiceProvider extends ServiceProvider {
         $this->mergeConfigFrom($this->getConfigFilePath(), 'peskyorm');
         $connections = config('database.connections');
         $default = config('database.default');
+        $timezone = config('app.timezone');
         if (is_array($connections)) {
             try {
                 foreach ($connections as $name => $connectionConfig) {
@@ -27,9 +28,15 @@ class PeskyOrmServiceProvider extends ServiceProvider {
                         in_array(strtolower(array_get($connectionConfig, 'driver', '')), static::$drivers)
                         && !empty($connectionConfig['password'])
                     ) {
-                        DbConnectionsManager::createConnectionFromArray($name, $connectionConfig, $this->app->runningInConsole());
+                        $connection = DbConnectionsManager::createConnectionFromArray($name, $connectionConfig, $this->app->runningInConsole());
                         if ($name === $default) {
                             DbConnectionsManager::addAlternativeNameForConnection($name, 'default', $this->app->runningInConsole());
+                        }
+                        
+                        if ($timezone) {
+                            $connection->onConnect(function (DbAdapterInterface $adapter) use ($timezone) {
+                                $adapter->setTimezone($timezone);
+                            }, 'timezone');
                         }
                     }
                 }

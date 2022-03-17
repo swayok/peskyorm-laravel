@@ -33,11 +33,12 @@ trait PasswordColumn {
                 DefaultColumnClosures::valueSetter($newValue, $isFromDb, $valueContainer, $trustDataReceivedFromDb);
             })
             ->privateValue();
-        return static::modifyPasswordColumn($column);
+        static::modifyPasswordColumn($column);
+        return $column;
     }
     
     static public function modifyPasswordColumn(Column $column) {
-        return $column;
+    
     }
 
     static public function hashPassword(string $plainPassword): string {

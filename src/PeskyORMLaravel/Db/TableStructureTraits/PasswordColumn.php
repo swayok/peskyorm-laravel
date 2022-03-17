@@ -14,7 +14,7 @@ trait PasswordColumn {
     }
     
     static public function createPasswordColumn() {
-        return Column::create(Column::TYPE_PASSWORD)
+        $column = Column::create(Column::TYPE_PASSWORD)
             ->convertsEmptyStringToNull()
             ->setValuePreprocessor(function ($value, $isDbValue, $isForValidation, Column $column) {
                 $value = DefaultColumnClosures::valuePreprocessor($value, $isDbValue, $isForValidation, $column);
@@ -33,6 +33,11 @@ trait PasswordColumn {
                 DefaultColumnClosures::valueSetter($newValue, $isFromDb, $valueContainer, $trustDataReceivedFromDb);
             })
             ->privateValue();
+        return static::modifyPasswordColumn($column);
+    }
+    
+    static public function modifyPasswordColumn(Column $column) {
+        return $column;
     }
 
     static public function hashPassword(string $plainPassword): string {

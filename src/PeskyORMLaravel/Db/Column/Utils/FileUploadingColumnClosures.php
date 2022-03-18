@@ -473,10 +473,11 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * @param FileColumn|Column $column
+     * @param array $additionalFormats
      * @return array
      */
-    public static function getValueFormats(Column $column) {
-        $defaultFormats = parent::getValueFormats($column);
+    public static function getValueFormats(Column $column, array $additionalFormats = []) {
+        $defaultFormats = parent::getValueFormats($column, $additionalFormats);
         $formats = [];
         if ($column instanceof FileColumn) {
             $formats = [
@@ -486,6 +487,6 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
                 'path'
             ];
         }
-        return array_unique(array_merge($defaultFormats, $formats));
+        return array_unique(array_merge($defaultFormats, $formats, $additionalFormats));
     }
 }

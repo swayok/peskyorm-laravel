@@ -40,7 +40,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
             }
             $valueContainer->setRawValue('{}', '{}', false)->setValidValue('{}', '{}');
         } else {
-            list($newFiles, $filesToDelete, $updatedValue) = static::collectDataForSaving($normaizledValue, $valueContainer);
+            [$newFiles, $filesToDelete, $updatedValue] = static::collectDataForSaving($normaizledValue, $valueContainer);
             $valueContainer->setIsFromDb(false);
             $json = json_encode($updatedValue, JSON_UNESCAPED_UNICODE);
             $valueContainer
@@ -59,7 +59,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @return array
      */
     static protected function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
-        list($newFiles, $uuidPosition, $uuidsOfFilesToDelete) = static::analyzeUploadedFilesAndData($normaizledValue);
+        [$newFiles, $uuidPosition, $uuidsOfFilesToDelete] = static::analyzeUploadedFilesAndData($normaizledValue);
 
         /** @var FilesColumn $column */
         $column = $valueContainer->getColumn();
@@ -727,10 +727,11 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * @param FilesColumn|Column $column
+     * @param array $additionalFormats
      * @return array
      */
-    public static function getValueFormats(Column $column) {
-        $defaultFormats = parent::getValueFormats($column);
+    public static function getValueFormats(Column $column, array $additionalFormats = []) {
+        $defaultFormats = parent::getValueFormats($column, $additionalFormats);
         $formats = [];
         if ($column instanceof FilesColumn) {
             $formats = [

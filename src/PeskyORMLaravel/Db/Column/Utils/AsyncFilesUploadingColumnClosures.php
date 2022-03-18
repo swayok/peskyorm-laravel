@@ -34,7 +34,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
             return $valueContainer->setValidationErrors($errors);
         }
         /** @var array $newValue */
-        list($newFiles, $filesToDelete, $updatedValue) = static::collectDataForSaving($normaizledValue, $valueContainer);
+        [$newFiles, $filesToDelete, $updatedValue] = static::collectDataForSaving($normaizledValue, $valueContainer);
         $valueContainer->setIsFromDb(false);
         $json = json_encode($updatedValue, JSON_UNESCAPED_UNICODE);
         $valueContainer
@@ -509,10 +509,11 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
 
     /**
      * @param FilesColumn|Column $column
+     * @param array $additionalFormats
      * @return array
      */
-    public static function getValueFormats(Column $column) {
-        $defaultFormats = parent::getValueFormats($column);
+    public static function getValueFormats(Column $column, array $additionalFormats = []) {
+        $defaultFormats = parent::getValueFormats($column, $additionalFormats);
         $formats = [];
         if ($column instanceof FilesColumn) {
             $formats = [

@@ -37,7 +37,7 @@ trait PasswordColumn {
         return $column;
     }
     
-    static public function modifyPasswordColumn(Column $column) {
+    static protected function modifyPasswordColumn(Column $column) {
     
     }
 

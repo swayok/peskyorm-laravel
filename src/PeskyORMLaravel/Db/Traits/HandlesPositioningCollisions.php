@@ -12,7 +12,7 @@ trait HandlesPositioningCollisions {
 
     private $transactionWasCreatedForPositioningCollision = false;
 
-    protected function beforeSave(array $columnsToSave, array $data, bool $isUpdate) {
+    protected function beforeSave(array $columnsToSave, array $data, bool $isUpdate): array {
         $this->transactionWasCreatedForPositioningCollision = false;
         if ($isUpdate) {
             /** @var TableInterface $table */

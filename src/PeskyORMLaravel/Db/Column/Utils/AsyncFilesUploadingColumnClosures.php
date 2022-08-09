@@ -14,15 +14,8 @@ use PeskyORMLaravel\Db\Column\ImagesColumn;
 
 class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
 
-    /**
-     * Set value. Should also normalize and validate value
-     * @param mixed $newValue
-     * @param boolean $isFromDb
-     * @param RecordValue $valueContainer
-     * @param bool $trustDataReceivedFromDb
-     * @return RecordValue
-     */
-    static public function valueSetter($newValue, $isFromDb, RecordValue $valueContainer, $trustDataReceivedFromDb) {
+    public static function valueSetter($newValue, bool $isFromDb, RecordValue $valueContainer, bool $trustDataReceivedFromDb): RecordValue
+    {
         if ($isFromDb) {
             return parent::valueSetter($newValue, $isFromDb, $valueContainer, $trustDataReceivedFromDb);
         }

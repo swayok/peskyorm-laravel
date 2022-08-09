@@ -1,35 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Providers;
 
-use Illuminate\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\Authenticatable as UserContract;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
-use PeskyCMF\Db\Admins\CmfAdmin;
+use Illuminate\Support\Facades\Hash;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordInterface;
 
-class PeskyOrmUserProvider implements UserProvider {
-
+class PeskyOrmUserProvider implements UserProvider
+{
+    
     /**
-     * The PeskyORM user object (DbObject).
+     * The PeskyORM user object (Record).
      *
-     * @var string
+     * @var string|RecordInterface
      */
     protected $dbRecordClass;
     /**
      * @var array
      */
     protected $relationsToFetch = [];
-
+    
     /**
-     * Create a new database user provider.
-     *
-     * @param string $dbRecordClass
+     * @param string|RecordInterface $dbRecordClass
      * @param array $relationsToFetch
      * @throws \InvalidArgumentException
      */
-    public function __construct($dbRecordClass, array $relationsToFetch = []) {
+    public function __construct(string $dbRecordClass, array $relationsToFetch = [])
+    {
         if (empty($dbRecordClass) || !class_exists($dbRecordClass)) {
             throw new \InvalidArgumentException(
                 'Argument $dbRecordClass must contin a class name that implements PeskyORM\ORM\RecordInterface'
@@ -38,31 +39,20 @@ class PeskyOrmUserProvider implements UserProvider {
         $this->dbRecordClass = $dbRecordClass;
         $this->relationsToFetch = $relationsToFetch;
     }
-
-    /**
-     * Retrieve a user by their unique identifier.
-     *
-     * @param mixed $identifier
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
-     */
-    public function retrieveById($identifier) {
+    
+    public function retrieveById($identifier)
+    {
         if (!$this->isValidIdentifierValue($identifier)) {
             return null;
         }
-        /** @var RecordInterface $user */
-        $user = $this->createEmptyUserRecord()->fetchByPrimaryKey($identifier, [], $this->getRelationsToFetch());
-
+        $user = $this->createEmptyUserRecord()
+            ->fetchByPrimaryKey($identifier, [], $this->getRelationsToFetch());
+        
         return $this->validateUser($user, null);
     }
-
-    /**
-     * Retrieve a user by their unique identifier and "remember me" token.
-     *
-     * @param  mixed $identifier
-     * @param  string $token
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
-     */
-    public function retrieveByToken($identifier, $token) {
+    
+    public function retrieveByToken($identifier, $token)
+    {
         /** @var RecordInterface|Authenticatable $userRecord */
         if (!$this->isValidIdentifierValue($identifier)) {
             return null;
@@ -77,29 +67,31 @@ class PeskyOrmUserProvider implements UserProvider {
         );
         /** @var RecordInterface $user */
         $user = $userRecord->fetch($conditions, [], $this->getRelationsToFetch());
-
+        
         return $this->validateUser($user, null);
     }
-
+    
     /**
      * @param mixed $identifier
      * @return bool
      */
-    protected function isValidIdentifierValue($identifier) {
+    protected function isValidIdentifierValue($identifier): bool
+    {
         if (is_string($identifier) && preg_match('%^s:\d+:%', $identifier)) {
             // it seems that after one of Laravel's minor updates they does not
             // serialize data anymore and in result it crashes during DB query
             return false;
         }
-
+        
         /** @var RecordInterface|Authenticatable $userRecord */
         $userRecord = $this->createEmptyUserRecord();
         // do not attempt to use empty, non-numeric or negative value in DB query
-        if (
-            empty($identifier)
+        return (
+        !(empty($identifier)
             || (
                 in_array(
-                    $userRecord::getColumn($userRecord->getAuthIdentifierName())->getType(),
+                    $userRecord::getColumn($userRecord->getAuthIdentifierName())
+                        ->getType(),
                     [Column::TYPE_INT, Column::TYPE_FLOAT],
                     true
                 )
@@ -107,19 +99,17 @@ class PeskyOrmUserProvider implements UserProvider {
                     !is_numeric($identifier)
                     || (int)$identifier <= 0
                 )
-            )
-        ) {
-            return false;
-        }
-        return true;
+            ))
+        );
     }
-
+    
     /**
      * @param RecordInterface $user
      * @param mixed $onFailReturn
      * @return mixed|RecordInterface
      */
-    protected function validateUser(RecordInterface $user, $onFailReturn = null) {
+    protected function validateUser(RecordInterface $user, $onFailReturn = null)
+    {
         if (
             $user->existsInDb()
             && (!$user::hasColumn('is_active') || $user->getValue('is_active'))
@@ -128,34 +118,35 @@ class PeskyOrmUserProvider implements UserProvider {
         ) {
             return $user;
         }
-
+        
         return $onFailReturn;
     }
-
+    
     /**
      * Update the "remember me" token for the given user in storage.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  string $token
+     * @param Authenticatable $user
+     * @param string $token
      * @return void
      */
-    public function updateRememberToken(UserContract $user, $token) {
-        /** @var RecordInterface|Authenticatable|CmfAdmin $user */
+    public function updateRememberToken(Authenticatable $user, $token)
+    {
+        /** @var RecordInterface|Authenticatable $user */
         $user->begin();
         $user->setRememberToken($token);
         $user->commit();
     }
-
+    
     /**
      * Retrieve a user by the given credentials.
      *
-     * @param  array $credentials
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
+     * @param array $credentials
+     * @return Authenticatable|null
      */
-    public function retrieveByCredentials(array $credentials) {
-
+    public function retrieveByCredentials(array $credentials)
+    {
         $conditions = [];
-
+        
         foreach ($this->normalizeCredentials($credentials) as $key => $value) {
             if (!str_contains($key, 'password')) {
                 $conditions[$key] = $value;
@@ -168,11 +159,12 @@ class PeskyOrmUserProvider implements UserProvider {
             [],
             $this->getRelationsToFetch()
         );
-
+        
         return $this->validateUser($user, null);
     }
     
-    protected function normalizeCredentials(array $credentials): array {
+    protected function normalizeCredentials(array $credentials): array
+    {
         if (isset($credentials['email']) && is_string($credentials['email'])) {
             $credentials['email'] = mb_strtolower($credentials['email']);
         }
@@ -181,10 +173,9 @@ class PeskyOrmUserProvider implements UserProvider {
     
     /**
      * Get specific conditions for user fetching by credentials or by remember token.
-     *
-     * @return array
      */
-    public function getAdditionalConditionsForFetchOne(): array {
+    public function getAdditionalConditionsForFetchOne(): array
+    {
         $conditions = [];
         /** @var RecordInterface $userClass */
         $userClass = $this->dbRecordClass;
@@ -199,56 +190,45 @@ class PeskyOrmUserProvider implements UserProvider {
         }
         return $conditions;
     }
-
-    /**
-     * Validate a user against the given credentials.
-     *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  array $credentials
-     * @return bool
-     */
-    public function validateCredentials(UserContract $user, array $credentials) {
+    
+    public function validateCredentials(Authenticatable $user, array $credentials)
+    {
         foreach ($this->normalizeCredentials($credentials) as $columnName => $value) {
             if (is_string($columnName) && !is_numeric($columnName)) {
                 if ($columnName === 'password') {
-                    if (!\Hash::check($value, $user->getAuthPassword())) {
+                    if (!Hash::check($value, $user->getAuthPassword())) {
                         return false;
                     }
-                } else if ($user->$columnName !== $value) {
+                } elseif ($user->$columnName !== $value) {
                     return false;
                 }
             }
         }
-
+        
         return true;
     }
-
+    
     /**
-     * Create a new instance of the db record.
-     *
-     * @return RecordInterface
+     * @return RecordInterface|Authenticatable
      */
-    public function createEmptyUserRecord() {
+    public function createEmptyUserRecord(): RecordInterface
+    {
         /** @var RecordInterface $class */
         $class = $this->dbRecordClass;
-
+        
         return new $class();
     }
-
+    
     /**
      * Needed for JWTGuard
-     *
-     * @return string
      */
-    public function getModel() {
+    public function getModel(): string
+    {
         return $this->dbRecordClass;
     }
-
-    /**
-     * Related records to read together with main record
-     * @return array
-     */
-    public function getRelationsToFetch() {
+    
+    public function getRelationsToFetch(): array
+    {
         return $this->relationsToFetch;
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel;
 
 use Illuminate\Validation\PresenceVerifierInterface;
@@ -7,27 +9,22 @@ use PeskyORM\Core\DbConnectionsManager;
 use PeskyORM\ORM\FakeTable;
 use PeskyORM\ORM\TableInterface;
 
-class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
-
+class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface
+{
+    
     protected $tables = [];
     /**
      * Defines if column values should be compared in case sensitive mode or in case insensitive mode
      * @var bool
      */
     protected $caseSensitiveModeEnabled = true;
-
     /**
-     * Count the number of objects in a collection having the given value.
-     *
-     * @param  string $tableName
-     * @param  string $column
-     * @param  string $value
-     * @param  int $excludeId
-     * @param  string $idColumn
-     * @param  array $extra
-     * @return int
+     * @var string
      */
-    public function getCount($tableName, $column, $value, $excludeId = null, $idColumn = null, array $extra = []) {
+    protected $connectionName = 'default';
+    
+    public function getCount($tableName, $column, $value, $excludeId = null, $idColumn = null, array $extra = [])
+    {
         if ($this->caseSensitiveModeEnabled || is_numeric($value)) {
             $conditions = [$column => $value];
         } else {
@@ -39,52 +36,39 @@ class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
         foreach ($extra as $key => $extraValue) {
             $this->addWhere($conditions, $key, $extraValue);
         }
-        return $this->getTable($tableName)->count($conditions);
+        return $this->getTable($tableName)
+            ->count($conditions);
     }
-
-    /**
-     * Count the number of objects in a collection with the given values.
-     *
-     * @param  string $tableName
-     * @param  string $column
-     * @param  array $values
-     * @param  array $extra
-     * @return int
-     */
-    public function getMultiCount($tableName, $column, array $values, array $extra = []) {
+    
+    public function getMultiCount($tableName, $column, array $values, array $extra = [])
+    {
         $conditions = [$column => $values];
-
+        
         foreach ($extra as $key => $extraValue) {
             $this->addWhere($conditions, $key, $extraValue);
         }
-
-        return $this->getTable($tableName)->count($conditions);
+        
+        return $this->getTable($tableName)
+            ->count($conditions);
     }
-
-    /**
-     * @param string $tableName
-     * @return TableInterface
-     */
-    private function getTable($tableName) {
+    
+    private function getTable(string $tableName): TableInterface
+    {
         if (!array_key_exists($tableName, $this->tables)) {
             $this->tables[$tableName] = FakeTable::makeNewFakeTable(
                 $tableName,
                 null,
-                DbConnectionsManager::getConnection('default')
+                DbConnectionsManager::getConnection($this->connectionName)
             );
         }
         return $this->tables[$tableName];
     }
-
+    
     /**
      * Add a "where" clause to the given query.
-     *
-     * @param  array $conditions
-     * @param  string $key
-     * @param  string $extraValue
-     * @return void
      */
-    protected function addWhere(&$conditions, $key, $extraValue) {
+    protected function addWhere(array &$conditions, string $key, string $extraValue): void
+    {
         if ($extraValue === 'NULL') {
             $conditions[$key] = null;
         } elseif ($extraValue === 'NOT_NULL') {
@@ -93,19 +77,28 @@ class PeskyOrmDatabasePresenceVerifier implements PresenceVerifierInterface {
             $conditions[$key] = $extraValue;
         }
     }
-
-    public function setConnection($connection) {
-        // don't need this but may come
+    
+    public function setConnection(string $connectionName): void
+    {
+        $this->connectionName = $connectionName;
     }
-
-    public function enableCaseInsensitiveMode() {
+    
+    /**
+     * @return static
+     */
+    public function enableCaseInsensitiveMode()
+    {
         $this->caseSensitiveModeEnabled = false;
         return $this;
     }
-
-    public function enableCaseSensitiveMode() {
+    
+    /**
+     * @return static
+     */
+    public function enableCaseSensitiveMode()
+    {
         $this->caseSensitiveModeEnabled = true;
         return $this;
     }
-
+    
 }

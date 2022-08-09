@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Console\Commands;
 
 use Illuminate\Database\Console\Migrations\BaseCommand;
@@ -11,36 +13,35 @@ use PeskyORM\Core\DbConnectionsManager;
 use PeskyORM\Core\DbExpr;
 use PeskyORM\ORM\Column;
 
-class OrmGenerateMigrationCommand extends BaseCommand {
-
+class OrmGenerateMigrationCommand extends BaseCommand
+{
+    
     /**
-     * The name and signature of the console command.
-     *
      * @var string
      */
     protected $signature = 'orm:generate-migration {table_name} {schema?}
                                 {--connection= : name of connection to use}
                                 {--path= : The location where the migration file should be created.}';
-
+    
     /**
-     * The console command description.
-     *
      * @var string
      */
     protected $description = 'Create migration based on existing table in DB';
-
+    
     /**
      * @var Composer
      */
     protected $composer;
-
-    public function __construct(Composer $composer) {
+    
+    public function __construct(Composer $composer)
+    {
         parent::__construct();
-
+        
         $this->composer = $composer;
     }
-
-    public function handle() {
+    
+    public function handle(): void
+    {
         $connectionName = $this->option('connection');
         if (!empty($connectionName)) {
             if (DbConnectionsManager::hasConnection($connectionName)) {
@@ -49,7 +50,7 @@ class OrmGenerateMigrationCommand extends BaseCommand {
                 $connectionInfo = config('database.connections.' . $connectionName);
                 if (!is_array($connectionInfo)) {
                     $this->error("There is no configuration info for connection '{$connectionName}'");
-
+                    
                     return;
                 }
                 $connection = DbConnectionsManager::createConnectionFromArray($connectionName, $connectionInfo);
@@ -64,15 +65,16 @@ class OrmGenerateMigrationCommand extends BaseCommand {
                 $schemaName = $connection->getDefaultTableSchema();
             }
             $this->error("Table '{$schemaName}.{$tableName}' not found in database");
-
+            
             return;
         }
-
+        
         $this->writeMigration($connection, $tableName, $schemaName);
         $this->composer->dumpAutoloads();
     }
-
-    protected function writeMigration(DbAdapterInterface $connection, $tableName, $schemaName) {
+    
+    protected function writeMigration(DbAdapterInterface $connection, $tableName, $schemaName): void
+    {
         $data = $this->collectDataForTableSchema($connection, $tableName, $schemaName);
         $className = $this->getClassName($tableName, $schemaName);
         if (class_exists($className)) {
@@ -80,58 +82,64 @@ class OrmGenerateMigrationCommand extends BaseCommand {
             return;
         }
         $fileContents = str_replace(
-            array(':class', ':table', ':columns', ':indexes', ':foreign_keys'),
-            array(
+            [':class', ':table', ':columns', ':indexes', ':foreign_keys'],
+            [
                 $className,
                 $tableName,
                 implode("\n            ", $data['columns']),
                 implode("\n            ", $data['indexes']),
-                implode("\n            ", $data['foreign_keys'])
-            ),
+                implode("\n            ", $data['foreign_keys']),
+            ],
             $this->getTemplate()
         );
-
+        
         $fileName = $this->getFullFileName($tableName, $schemaName);
         file_put_contents($this->getMigrationPath() . '/' . $fileName, $fileContents);
-
+        
         $this->line("<info>Created Migration:</info> {$fileName}");
     }
-
-    protected function getFullFileName($tableName, $schemaName) {
+    
+    protected function getFullFileName($tableName, $schemaName): string
+    {
         return date('Y_m_d_His_') . $this->getBaseFileName($tableName, $schemaName) . '.php';
     }
-
-    protected function getBaseFileName($tableName, $schemaName) {
+    
+    protected function getBaseFileName($tableName, $schemaName): string
+    {
         $name = 'create_' . $tableName . '_table';
         if (!empty($schemaName)) {
             $name .= '_in_' . $schemaName . '_schema';
         }
         return Str::snake($name);
     }
-
-    protected function getClassName($tableName, $schemaName) {
+    
+    protected function getClassName($tableName, $schemaName): string
+    {
         return Str::studly($this->getBaseFileName($tableName, $schemaName));
     }
-
-    protected function getMigrationPath() {
+    
+    protected function getMigrationPath()
+    {
         if (null !== ($targetPath = $this->input->getOption('path'))) {
             return $this->laravel->basePath() . '/' . $targetPath;
         }
-
+        
         return parent::getMigrationPath();
     }
-
-    protected function getTemplate() {
+    
+    protected function getTemplate()
+    {
         return file_get_contents(__DIR__ . '/stub/migration');
     }
-
+    
     /**
      * @param DbAdapterInterface $connection
      * @param string $tableName
      * @param string|null $schemaName
      * @return array
      */
-    protected function collectDataForTableSchema(DbAdapterInterface $connection, $tableName, $schemaName) {
+    protected function collectDataForTableSchema(DbAdapterInterface $connection, string $tableName, ?string $schemaName): array
+    {
         $tableInfo = $connection->describeTable($tableName, $schemaName);
         $columns = [];
         $indexes = [];
@@ -144,15 +152,16 @@ class OrmGenerateMigrationCommand extends BaseCommand {
         return [
             'columns' => $columns,
             'indexes' => $indexes,
-            'foreign_keys' => $foreignKeys
+            'foreign_keys' => $foreignKeys,
         ];
     }
-
+    
     /**
      * @param ColumnDescription $columnDescription
      * @return array
      */
-    protected function buildColumn(ColumnDescription $columnDescription) {
+    protected function buildColumn(ColumnDescription $columnDescription): array
+    {
         if ($columnDescription->isPrimaryKey() && $columnDescription->getOrmType() === Column::TYPE_INT) {
             switch ($columnDescription->getDbType()) {
                 case 'tinyint':
@@ -180,11 +189,12 @@ class OrmGenerateMigrationCommand extends BaseCommand {
         $default = $columnDescription->getDefault();
         if ($default !== null) {
             if ($default instanceof DbExpr) {
-                $default = $default->setWrapInBrackets(false)->get();
+                $default = $default->setWrapInBrackets(false)
+                    ->get();
                 $column[] = "    ->default(\DB::raw('{$default}'))";
-            } else if (is_string($default)) {
+            } elseif (is_string($default)) {
                 $column[] = "    ->default('{$default}')";
-            } else if (is_bool($default)) {
+            } elseif (is_bool($default)) {
                 $default = $default ? 'true' : 'false';
                 $column[] = "    ->default({$default})";
             } else {
@@ -194,8 +204,9 @@ class OrmGenerateMigrationCommand extends BaseCommand {
         $column[count($column) - 1] .= ';';
         return $column;
     }
-
-    protected function generateColumnType(ColumnDescription $columnDescription) {
+    
+    protected function generateColumnType(ColumnDescription $columnDescription): string
+    {
         switch ($columnDescription->getOrmType()) {
             case Column::TYPE_INT:
                 switch ($columnDescription->getDbType()) {
@@ -237,11 +248,10 @@ class OrmGenerateMigrationCommand extends BaseCommand {
             case Column::TYPE_BLOB:
                 return "\$table->binary('{$columnDescription->getName()}')";
             case Column::TYPE_STRING:
-                switch ($columnDescription->getDbType()) {
-                    case 'char':
-                        return "\$table->char('{$columnDescription->getName()}', {$columnDescription->getLimit()})";
-                    default:
-                        return "\$table->string('{$columnDescription->getName()}', {$columnDescription->getLimit()})";
+                if ($columnDescription->getDbType() === 'char') {
+                    return "\$table->char('{$columnDescription->getName()}', {$columnDescription->getLimit()})";
+                } else {
+                    return "\$table->string('{$columnDescription->getName()}', {$columnDescription->getLimit()})";
                 }
             case Column::TYPE_DATE:
                 return "\$table->date('{$columnDescription->getName()}')";
@@ -263,12 +273,14 @@ class OrmGenerateMigrationCommand extends BaseCommand {
                 return "\$table->string('{$columnDescription->getName()}', {$columnDescription->getLimit()})";
         }
     }
-
-    protected function buildIndexes(ColumnDescription $columnDescription) {
+    
+    protected function buildIndexes(ColumnDescription $columnDescription): array
+    {
         return [];
     }
-
-    protected function buildForeignKeys(ColumnDescription $columnDescription) {
+    
+    protected function buildForeignKeys(ColumnDescription $columnDescription): array
+    {
         if ($columnDescription->isForeignKey()) {
             $possibleTableName = '';
             if (preg_match('%^(.*?)_id$%is', $columnDescription->getName(), $matches)) {
@@ -279,10 +291,10 @@ class OrmGenerateMigrationCommand extends BaseCommand {
                 "    ->references('id')",
                 "    ->on('$possibleTableName')",
                 "    ->onDelete('cascade')",
-                "    ->onUpdate('cascade');"
+                "    ->onUpdate('cascade');",
             ];
         }
         return [];
     }
-
+    
 }

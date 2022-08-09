@@ -24,9 +24,9 @@ class PeskyOrmServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->mergeConfigFrom($this->getConfigFilePath(), 'peskyorm');
-        $connections = config('database.connections');
-        $default = config('database.default');
-        $timezone = config('app.timezone');
+        $connections = $this->app['config']->get('database.connections');
+        $default = $this->app['config']->get('database.default');
+        $timezone = $this->app['config']->get('app.timezone');
         if (is_array($connections)) {
             try {
                 foreach ($connections as $name => $connectionConfig) {
@@ -55,7 +55,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
     
     protected function addPdoCollectorForDebugbar(): void
     {
-        $pdoWrapper = config('peskyorm.pdo_wrapper');
+        $pdoWrapper = $this->app['config']->get('peskyorm.pdo_wrapper');
         if ($pdoWrapper) {
             if ($pdoWrapper instanceof \PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer) {
                 if (app()->offsetExists('debugbar') && app('debugbar')->isEnabled()) {

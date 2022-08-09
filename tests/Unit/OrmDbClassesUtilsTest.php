@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests;
+namespace Tests\Unit;
 
 use PeskyORMLaravel\Db\OrmDbClassesUtils;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class OrmDbClassesUtilsTest extends TestCase {
     
@@ -21,27 +21,15 @@ class OrmDbClassesUtilsTest extends TestCase {
         
         $class = OrmDbClassesUtils::getRecordClassByTableNameInDb($tableName);
         static::assertNotEmpty($class);
-        static::assertEquals('App\Db\Admins\Admin', $class);
+        static::assertEquals('App\\Db\\Admins\\Admin', $class);
         
-        $record = OrmDbClassesUtils::getRecordInstanceByTableNameInDb($tableName);
-        static::assertNotNull($record);
-        static::assertInstanceOf('App\Db\Admins\Admin', $record);
-    
         $class = OrmDbClassesUtils::getTableClassByTableNameInDb($tableName);
         static::assertNotEmpty($class);
-        static::assertEquals('App\Db\Admins\AdminsTable', $class);
-    
-        $table = OrmDbClassesUtils::getTableInstanceByTableNameInDb($tableName);
-        static::assertNotNull($table);
-        static::assertInstanceOf('App\Db\Admins\AdminsTable', $table);
+        static::assertEquals('App\\Db\\Admins\\AdminsTable', $class);
     
         $class = OrmDbClassesUtils::getTableStructureClassByTableNameInDb($tableName);
         static::assertNotEmpty($class);
-        static::assertEquals('App\Db\Admins\AdminsTableStructure', $class);
-    
-        $tableStructure = OrmDbClassesUtils::getTableStructureInstanceByTableNameInDb($tableName);
-        static::assertNotNull($tableStructure);
-        static::assertInstanceOf('App\Db\Admins\AdminsTableStructure', $tableStructure);
+        static::assertEquals('App\\Db\\Admins\\AdminsTableStructure', $class);
     }
     
 }

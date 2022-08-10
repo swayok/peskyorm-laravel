@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PeskyORMLaravel\Providers;
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use PeskyORM\Core\DbAdapter;
 use PeskyORM\Core\DbAdapterInterface;
@@ -92,12 +91,12 @@ class PeskyOrmServiceProvider extends ServiceProvider
     
     public function register()
     {
-        Auth::provider('peskyorm', function ($app, $config) {
+        $this->app['auth']->provider('peskyorm', function ($app, $config) {
             return new PeskyOrmUserProvider(Arr::get($config, 'model'), (array)Arr::get($config, 'relations', []));
         });
         
         $this->app->singleton('peskyorm.connection', function () {
-            DbConnectionsManager::getConnection('default');
+            return DbConnectionsManager::getConnection('default');
         });
         
         $this->app->register(PeskyValidationServiceProvider::class);

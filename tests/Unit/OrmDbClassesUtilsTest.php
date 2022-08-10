@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace PeskyORMLaravel\Tests\Unit;
 
 use PeskyORMLaravel\Db\OrmDbClassesUtils;
-use Tests\TestCase;
+use PeskyORMLaravel\Tests\TestCase;
 
 class OrmDbClassesUtilsTest extends TestCase
 {

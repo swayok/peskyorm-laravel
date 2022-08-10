@@ -23,7 +23,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests"
+            "PeskyORMLaravel\\Tests\\": "tests"
         }
     },
     "minimum-stability": "dev",

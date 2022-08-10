@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests;
+namespace PeskyORMLaravel\Tests;
 
 use Illuminate\Support\Arr;
 use PeskyORMLaravel\Providers\PeskyOrmServiceProvider;
@@ -54,4 +54,6 @@ class TestCase extends \Orchestra\Testbench\TestCase
             'strict' => false,
         ]);
     }
+    
+    
 }

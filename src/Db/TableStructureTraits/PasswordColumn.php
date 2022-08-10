@@ -1,26 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Db\TableStructureTraits;
 
+use Illuminate\Support\Facades\Hash;
 use PeskyORM\ORM\Column;
 use PeskyORM\ORM\DefaultColumnClosures;
 use PeskyORM\ORM\RecordValue;
 
-trait PasswordColumn {
-
-    private function password() {
+trait PasswordColumn
+{
+    
+    private function password(): Column
+    {
         return static::createPasswordColumn()
             ->disallowsNullValues();
     }
     
-    static public function createPasswordColumn() {
+    public static function createPasswordColumn(): Column
+    {
         $column = Column::create(Column::TYPE_PASSWORD)
             ->convertsEmptyStringToNull()
             ->setValuePreprocessor(function ($value, $isDbValue, $isForValidation, Column $column) {
                 $value = DefaultColumnClosures::valuePreprocessor($value, $isDbValue, $isForValidation, $column);
                 if ($isDbValue) {
                     return $value;
-                } else if (!empty($value)) {
+                } elseif (!empty($value)) {
                     return static::hashPassword($value);
                 } else {
                     return $value;
@@ -37,12 +43,13 @@ trait PasswordColumn {
         return $column;
     }
     
-    static protected function modifyPasswordColumn(Column $column) {
+    protected static function modifyPasswordColumn(Column $column): void
+    {
+    }
     
+    public static function hashPassword(string $plainPassword): string
+    {
+        return Hash::make($plainPassword);
     }
-
-    static public function hashPassword(string $plainPassword): string {
-        return \Hash::make($plainPassword);
-    }
-
+    
 }

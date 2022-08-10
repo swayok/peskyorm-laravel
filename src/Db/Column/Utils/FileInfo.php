@@ -37,7 +37,7 @@ class FileInfo {
     /** @var null|string */
     protected $uploadedFilePath;
     /** @var int */
-    static private $autoPositioningCounter = 1;
+    private static $autoPositioningCounter = 1;
 
     /**
      * @param array $fileInfo

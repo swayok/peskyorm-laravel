@@ -20,7 +20,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      * @return bool
      * @throws \ImagickException
      */
-    static protected function validateUploadedFileContents(
+    protected static function validateUploadedFileContents(
         Column $column,
         FileConfigInterface $fileConfig,
         SymfonyUploadedFile $file,
@@ -69,7 +69,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      * @param FileInfo $fileInfo
      * @throws \UnexpectedValueException
      */
-    static protected function deleteExistingFiles(FileInfo $fileInfo) {
+    protected static function deleteExistingFiles(FileInfo $fileInfo) {
         parent::deleteExistingFiles($fileInfo);
         \File::cleanDirectory($fileInfo->getAbsolutePathToModifiedImagesFolder());
     }
@@ -80,7 +80,7 @@ class ImagesUploadingColumnClosures extends FilesUploadingColumnClosures {
      * @throws \UnexpectedValueException
      * @throws \ImagickException
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
+    protected static function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
         // modify image size if needed
         $imagick = new \Imagick($fileInfo->getAbsoluteFilePath());
         // aspect ratio

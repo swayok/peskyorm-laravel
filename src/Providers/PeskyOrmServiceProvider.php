@@ -15,7 +15,7 @@ use PeskyORMLaravel\Console\Commands\OrmMakeDbClassesCommand;
 class PeskyOrmServiceProvider extends ServiceProvider
 {
     
-    static protected $drivers = [
+    protected static $drivers = [
         'mysql',
         'pgsql',
     ];

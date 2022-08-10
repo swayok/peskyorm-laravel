@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Base64UploadedFile extends UploadedFile {
 
-    static protected $extToMime = [
+    protected static $extToMime = [
         'txt' => FilesGroupConfig::TXT,
         'pdf' => FilesGroupConfig::PDF,
         'rtf' => FilesGroupConfig::RTF,

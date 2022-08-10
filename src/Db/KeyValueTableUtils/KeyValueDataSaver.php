@@ -14,11 +14,11 @@ class KeyValueDataSaver extends Record
     /**
      * @var FakeTable $table
      */
-    static protected $table;
+    protected static $table;
     /**
      * @var KeyValueTableInterface $table
      */
-    static protected $originalTable;
+    protected static $originalTable;
     protected $_fkValue;
     protected $_constantAdditionalData = [];
     

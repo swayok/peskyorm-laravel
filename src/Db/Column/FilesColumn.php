@@ -42,7 +42,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess
     public const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
     public const DATA_IS_NOT_A_VALID_UPLOAD_INFO = 'file_is_not_a_valid_upload';
     
-    static protected $additionalValidationErrorsMessages = [
+    protected static $additionalValidationErrorsMessages = [
         self::IMAGE_TYPE_IS_NOT_ALLOWED => "Uploaded image type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_TYPE_IS_NOT_ALLOWED => "Uploaded file type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_SIZE_IS_TOO_LARGE => "Uploaded file size is too large for '%s'. Maximum file size is %s kilobytes.",

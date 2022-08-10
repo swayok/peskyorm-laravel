@@ -44,7 +44,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @return array
      */
-    static protected function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
+    protected static function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
         /** @var FilesColumn $column */
         $column = $valueContainer->getColumn();
         $filesGroups = $column->getFilesGroupsConfigurations();
@@ -104,7 +104,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param $filesGroupName
      * @return mixed
      */
-    static protected function getFileUuid($filesGroupName, array $fileInfoArray, RecordValue $valueContainer) {
+    protected static function getFileUuid($filesGroupName, array $fileInfoArray, RecordValue $valueContainer) {
         return array_get($fileInfoArray, 'uuid', function () use ($filesGroupName, $fileInfoArray, $valueContainer) {
             /** @var FilesColumn $column */
             $column = $valueContainer->getColumn();
@@ -159,7 +159,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $existingFiles
      * @return array
      */
-    static protected function normalizeDbValueForGroup(array $existingFiles) {
+    protected static function normalizeDbValueForGroup(array $existingFiles) {
         if (static::isFileInfoArray($existingFiles)) {
             $existingFiles = [$existingFiles];
         }
@@ -170,7 +170,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $uploadedFiles
      * @return array
      */
-    static protected function normalizeUploadedFilesGroup(array $uploadedFiles) {
+    protected static function normalizeUploadedFilesGroup(array $uploadedFiles) {
         $normailzedData = [];
         foreach ($uploadedFiles as $idx => $fileInfo) {
             if (is_string($fileInfo) && strlen($fileInfo) > 3) {
@@ -240,7 +240,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $errors
      * @return bool
      */
-    static protected function validateUploadedFileContents(
+    protected static function validateUploadedFileContents(
         Column $column,
         FileConfigInterface $fileConfig,
         UploadedTempFileInfo $fileInfo,
@@ -345,7 +345,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param FileInfo $fileInfo
      */
-    static protected function deleteExistingFile(FileInfo $fileInfo) {
+    protected static function deleteExistingFile(FileInfo $fileInfo) {
         \File::delete($fileInfo->getAbsoluteFilePath());
     }
 
@@ -354,7 +354,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param FileConfigInterface $fileConfig
      * @param FileInfo[] $fileUploads
      */
-    static protected function storeUploadedFiles(
+    protected static function storeUploadedFiles(
         RecordInterface $record,
         FileConfigInterface $fileConfig,
         array $fileUploads
@@ -374,7 +374,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
         }
     }
 
-    static protected function makeSuffix(string $fileIndex): string {
+    protected static function makeSuffix(string $fileIndex): string {
         return time() . $fileIndex;
     }
 
@@ -384,7 +384,7 @@ class AsyncFilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param FileInfo $fileInfo
      * @param FileConfigInterface $fileConfig
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
+    protected static function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
 
     }
 

@@ -58,7 +58,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordValue $valueContainer
      * @return array
      */
-    static protected function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
+    protected static function collectDataForSaving(array $normaizledValue, RecordValue $valueContainer) {
         [$newFiles, $uuidPosition, $uuidsOfFilesToDelete] = static::analyzeUploadedFilesAndData($normaizledValue);
 
         /** @var FilesColumn $column */
@@ -103,7 +103,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $normaizledValue
      * @return array
      */
-    static protected function analyzeUploadedFilesAndData(array $normaizledValue) {
+    protected static function analyzeUploadedFilesAndData(array $normaizledValue) {
         $newFiles = [];
         $uuidsOfFilesToDelete = [];
         $uuidPosition = [];
@@ -132,7 +132,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $uuidsOfFilesToDelete
      * @return array
      */
-    static protected function getExitstingFilesToDeleteOrUpdatePositions(
+    protected static function getExitstingFilesToDeleteOrUpdatePositions(
         array &$currentValue,
         RecordValue $valueContainer,
         array $uuidPosition,
@@ -165,7 +165,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param $fileName
      * @return mixed
      */
-    static protected function getFileUuid($fileName, array $fileData, RecordValue $valueContainer) {
+    protected static function getFileUuid($fileName, array $fileData, RecordValue $valueContainer) {
         return array_get($fileData, 'uuid', function () use ($fileName, $fileData, $valueContainer) {
             /** @var FilesColumn $column */
             $column = $valueContainer->getColumn();
@@ -228,7 +228,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $existingFiles
      * @return array
      */
-    static protected function normalizeDbValue(array $existingFiles) {
+    protected static function normalizeDbValue(array $existingFiles) {
         if (static::isFileInfoArray($existingFiles)) {
             $existingFiles = [$existingFiles];
         }
@@ -239,7 +239,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $uploadedFiles
      * @return array
      */
-    static protected function normalizeUploadedFiles(array $uploadedFiles) {
+    protected static function normalizeUploadedFiles(array $uploadedFiles) {
         if (array_has($uploadedFiles, 'file') || array_has($uploadedFiles, 'deleted')) {
             // normalize uploaded file info to be indexed array with file uploads inside
             $uploadedFiles = [$uploadedFiles];
@@ -363,7 +363,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $errors
      * @return bool
      */
-    static protected function validateUploadedFileContents(
+    protected static function validateUploadedFileContents(
         Column $column,
         FileConfigInterface $fileConfig,
         SymfonyUploadedFile $file,
@@ -399,7 +399,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $fileUpload
      * @return \Illuminate\Http\UploadedFile
      */
-    static protected function makeUploadedFileFromArray(array $fileUpload) {
+    protected static function makeUploadedFileFromArray(array $fileUpload) {
         return new \Illuminate\Http\UploadedFile(
             $fileUpload['tmp_name'],
             array_get($fileUpload, 'name'),
@@ -414,7 +414,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param \SplFileInfo $fileInfo
      * @return \Illuminate\Http\UploadedFile
      */
-    static protected function makeUploadedFileFromSplFileInfo(\SplFileInfo $fileInfo) {
+    protected static function makeUploadedFileFromSplFileInfo(\SplFileInfo $fileInfo) {
         return new \Illuminate\Http\UploadedFile(
             $fileInfo->getFilename(),
             $fileInfo->getFilename(),
@@ -520,7 +520,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param RecordInterface $record
      * @return array
      */
-    static protected function limitFilesCount(array $filesInfos, FileConfigInterface $fileConfig, RecordInterface $record) {
+    protected static function limitFilesCount(array $filesInfos, FileConfigInterface $fileConfig, RecordInterface $record) {
         while (count($filesInfos) > $fileConfig->getMaxFilesCount()) {
             static::deleteExistingFiles(FileInfo::fromArray(array_shift($filesInfos), $fileConfig, $record));
         }
@@ -530,7 +530,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param FileInfo $fileInfo
      */
-    static protected function deleteExistingFiles(FileInfo $fileInfo) {
+    protected static function deleteExistingFiles(FileInfo $fileInfo) {
         \File::delete($fileInfo->getAbsoluteFilePath());
     }
 
@@ -541,7 +541,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $existingFiles
      * @return array
      */
-    static protected function storeUploadedFiles(
+    protected static function storeUploadedFiles(
         RecordInterface $record,
         FileConfigInterface $fileConfig,
         array $fileUploads,
@@ -592,7 +592,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param FileInfo $fileInfo
      * @param FileConfigInterface $fileConfig
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
+    protected static function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
 
     }
 
@@ -600,7 +600,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $filesInfos
      * @return array
      */
-    static protected function reorderGroupOfFiles(array $filesInfos) {
+    protected static function reorderGroupOfFiles(array $filesInfos) {
         usort($filesInfos, function ($item1, $item2) {
             $pos1 = (int)array_get($item1, 'position', time() + 100);
             $pos2 = (int)array_get($item2, 'position', time() + 101);

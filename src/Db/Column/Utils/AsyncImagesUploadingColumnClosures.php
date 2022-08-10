@@ -7,7 +7,6 @@ use PeskyORM\ORM\Column;
 use PeskyORM\ORM\RecordValueHelpers;
 use PeskyORMLaravel\Db\Column\ImagesColumn;
 use Swayok\Utils\ValidateValue;
-use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
 class AsyncImagesUploadingColumnClosures extends AsyncFilesUploadingColumnClosures {
 
@@ -21,7 +20,7 @@ class AsyncImagesUploadingColumnClosures extends AsyncFilesUploadingColumnClosur
      * @return bool
      * @throws \ImagickException
      */
-    static protected function validateUploadedFileContents(
+    protected static function validateUploadedFileContents(
         Column $column,
         FileConfigInterface $fileConfig,
         UploadedTempFileInfo $fileInfo,
@@ -58,7 +57,7 @@ class AsyncImagesUploadingColumnClosures extends AsyncFilesUploadingColumnClosur
      * @param FileInfo $fileInfo
      * @throws \UnexpectedValueException
      */
-    static protected function deleteExistingFile(FileInfo $fileInfo) {
+    protected static function deleteExistingFile(FileInfo $fileInfo) {
         parent::deleteExistingFile($fileInfo);
         \File::cleanDirectory($fileInfo->getAbsolutePathToModifiedImagesFolder());
     }
@@ -69,7 +68,7 @@ class AsyncImagesUploadingColumnClosures extends AsyncFilesUploadingColumnClosur
      * @throws \UnexpectedValueException
      * @throws \ImagickException
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
+    protected static function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfigInterface $fileConfig) {
         // modify image size if needed
         $imagick = new \Imagick($fileInfo->getAbsoluteFilePath());
         // aspect ratio

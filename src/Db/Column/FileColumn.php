@@ -36,7 +36,7 @@ class FileColumn extends Column
     public const FILE_SIZE_IS_TOO_LARGE = 'file_size_is_too_large';
     public const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
     
-    static protected $additionalValidationErrorsMessages = [
+    protected static $additionalValidationErrorsMessages = [
         self::IMAGE_TYPE_IS_NOT_ALLOWED => "Uploaded image type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_TYPE_IS_NOT_ALLOWED => "Uploaded file type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_SIZE_IS_TOO_LARGE => "Uploaded file size is too large for '%s'. Maximum file size is %s kilobytes.",

@@ -29,7 +29,7 @@ abstract class MimeTypesHelper {
     /**
      * @var array
      */
-    static protected $mimeToExt = [
+    protected static $mimeToExt = [
         self::TXT => 'txt',
         self::PDF => 'pdf',
         self::RTF => 'rtf',
@@ -58,7 +58,7 @@ abstract class MimeTypesHelper {
      * For example: image/jpeg file type has alias image/x-jpeg
      * @var array
      */
-    static protected $mimeTypesAliases = [
+    protected static $mimeTypesAliases = [
         self::JPEG => [
             'image/x-jpeg'
         ],
@@ -98,7 +98,7 @@ abstract class MimeTypesHelper {
     const TYPE_ARCHIVE = 'archive';
     const TYPE_OFFICE = 'office';
 
-    static protected $mimeTypeToFileType = [
+    protected static $mimeTypeToFileType = [
         self::TXT => self::TYPE_TEXT,
         self::PDF => self::TYPE_OFFICE,
         self::RTF => self::TYPE_TEXT,

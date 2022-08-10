@@ -73,7 +73,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param $fileName
      * @return mixed
      */
-    static protected function getFileUuid($fileName, array $fileData, RecordValue $valueContainer) {
+    protected static function getFileUuid($fileName, array $fileData, RecordValue $valueContainer) {
         return array_get($fileData, 'uuid', function () use ($fileData, $valueContainer) {
             /** @var FileColumn $column */
             $column = $valueContainer->getColumn();
@@ -121,7 +121,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $existingFile
      * @return array
      */
-    static protected function normalizeDbValue(array $existingFile) {
+    protected static function normalizeDbValue(array $existingFile) {
         if (static::isFileInfoArray($existingFile)) {
             return $existingFile;
         }
@@ -132,7 +132,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $fileUploadInfo
      * @return array
      */
-    static protected function normalizeUploadedFile(array $fileUploadInfo) {
+    protected static function normalizeUploadedFile(array $fileUploadInfo) {
         $normailzedData = [];
         if ($fileUploadInfo instanceof \SplFileInfo) {
             $normailzedData = [
@@ -239,7 +239,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $errors
      * @return bool
      */
-    static protected function validateUploadedFileContents(
+    protected static function validateUploadedFileContents(
         Column $column,
         SymfonyUploadedFile $file,
         array &$errors
@@ -273,7 +273,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $fileUpload
      * @return \Illuminate\Http\UploadedFile
      */
-    static protected function makeUploadedFileFromArray(array $fileUpload) {
+    protected static function makeUploadedFileFromArray(array $fileUpload) {
         return new \Illuminate\Http\UploadedFile(
             $fileUpload['tmp_name'],
             array_get($fileUpload, 'name'),
@@ -288,7 +288,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param \SplFileInfo $fileInfo
      * @return \Illuminate\Http\UploadedFile
      */
-    static protected function makeUploadedFileFromSplFileInfo(\SplFileInfo $fileInfo) {
+    protected static function makeUploadedFileFromSplFileInfo(\SplFileInfo $fileInfo) {
         return new \Illuminate\Http\UploadedFile(
             $fileInfo->getFilename(),
             $fileInfo->getFilename(),
@@ -343,7 +343,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
     /**
      * @param FileInfo $fileInfo
      */
-    static protected function deleteExistingFile(FileInfo $fileInfo) {
+    protected static function deleteExistingFile(FileInfo $fileInfo) {
         \File::delete($fileInfo->getAbsoluteFilePath());
     }
 
@@ -353,7 +353,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $uploadInfo
      * @return array
      */
-    static protected function storeUploadedFile(RecordInterface $record, FileConfig $fileConfig, array $uploadInfo) {
+    protected static function storeUploadedFile(RecordInterface $record, FileConfig $fileConfig, array $uploadInfo) {
         $baseSuffix = time();
         $dir = $fileConfig->getAbsolutePathToFileFolder($record);
         if (!\File::isDirectory($dir)) {
@@ -388,7 +388,7 @@ class FileUploadingColumnClosures extends DefaultColumnClosures {
      * @param FileInfo $fileInfo
      * @param FileConfig|ImageConfig $fileConfig
      */
-    static protected function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfig $fileConfig) {
+    protected static function modifyUploadedFileAfterSaveToFs(FileInfo $fileInfo, FileConfig $fileConfig) {
 
     }
 

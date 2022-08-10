@@ -9,6 +9,9 @@ use PeskyORM\ORM\Column;
 use PeskyORM\ORM\DefaultColumnClosures;
 use PeskyORM\ORM\RecordValue;
 
+/**
+ * @psalm-require-implements \PeskyORM\ORM\TableStructureInterface
+ */
 trait PasswordColumn
 {
     

@@ -47,7 +47,7 @@ class FileColumn extends Column {
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
      */
-    static public function create($relativeUploadsFolderPath, $name = null) {
+    public static function create($relativeUploadsFolderPath, $name = null) {
         return new static($name, $relativeUploadsFolderPath);
     }
 
@@ -197,7 +197,7 @@ class FileColumn extends Column {
     /**
      * @return array
      */
-    static public function getValidationErrorsMessages() {
+    public static function getValidationErrorsMessages() {
         return static::$validationErrorsMessages ?: array_merge(static::$additionalValidationErrorsMessages, parent::getValidationErrorsMessages());
     }
 

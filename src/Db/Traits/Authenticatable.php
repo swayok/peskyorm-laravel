@@ -6,7 +6,10 @@ namespace PeskyORMLaravel\Db\Traits;
 
 use PeskyORM\ORM\RecordInterface;
 
-
+/**
+ * @psalm-require-implements \PeskyORM\ORM\RecordInterface
+ * @psalm-require-implements \Illuminate\Contracts\Auth\Authenticatable
+ */
 trait Authenticatable
 {
     

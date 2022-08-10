@@ -7,6 +7,9 @@ namespace PeskyORMLaravel\Db\Traits;
 use Illuminate\Routing\Route;
 use PeskyORM\ORM\RecordInterface;
 
+/**
+ * @psalm-require-implements \Illuminate\Routing\Controller
+ */
 trait InjectsDbRecords
 {
     

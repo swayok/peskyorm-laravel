@@ -7,6 +7,9 @@ namespace PeskyORMLaravel\Db\TableStructureTraits;
 use PeskyORM\Core\DbExpr;
 use PeskyORM\ORM\Column;
 
+/**
+ * @psalm-require-implements \PeskyORM\ORM\TableStructureInterface
+ */
 trait CreatedAtColumn
 {
     

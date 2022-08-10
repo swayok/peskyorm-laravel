@@ -120,27 +120,27 @@ abstract class MimeTypesHelper {
         self::GZIP => self::TYPE_ARCHIVE,
     ];
 
-    static public function getMimeTypesAliases(): array {
+    public static function getMimeTypesAliases(): array {
         return static::$mimeTypesAliases;
     }
 
-    static public function getMimeTypesToFileTypes(): array {
+    public static function getMimeTypesToFileTypes(): array {
         return static::$mimeTypeToFileType;
     }
 
-    static public function getMimeTypesToFileExtensions(): array {
+    public static function getMimeTypesToFileExtensions(): array {
         return static::$mimeToExt;
     }
 
-    static public function getExtensionForMimeType(string $mimeType): ?string {
+    public static function getExtensionForMimeType(string $mimeType): ?string {
         return isset(static::$mimeToExt[$mimeType]) ? static::$mimeToExt[$mimeType] : null;
     }
     
-    static public function getMimeTypeForExtension(string $extension): ?string {
+    public static function getMimeTypeForExtension(string $extension): ?string {
         return array_get(array_flip(static::$mimeToExt), $extension, null);
     }
 
-    static public function detectFileTypeByMimeType(?string $mimeType): string {
+    public static function detectFileTypeByMimeType(?string $mimeType): string {
         if (empty($mimeType) || !is_string($mimeType)) {
             return static::UNKNOWN;
         }
@@ -156,7 +156,7 @@ abstract class MimeTypesHelper {
         return static::UNKNOWN;
     }
 
-    static public function getAliasesForMimeTypes(array $mimeTypes): array {
+    public static function getAliasesForMimeTypes(array $mimeTypes): array {
         $aliases = [];
         foreach ($mimeTypes as $fileType) {
             if (!empty(static::$mimeTypesAliases[$fileType])) {

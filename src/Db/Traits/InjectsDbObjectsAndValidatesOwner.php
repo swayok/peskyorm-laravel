@@ -6,6 +6,7 @@ namespace PeskyORMLaravel\Db\Traits;
 
 /**
  * @deprecated Use InjectsDbRecordsAndValidatesOwner;
+ * @psalm-require-implements \Illuminate\Routing\Controller
  */
 trait InjectsDbObjectsAndValidatesOwner
 {

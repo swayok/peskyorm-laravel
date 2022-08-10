@@ -15,7 +15,7 @@ class ModifiedImageInfo extends FileInfo {
      * @param null|string $fileSuffix
      * @return ModifiedImageInfo
      */
-    static public function fromSplFileInfo(
+    public static function fromSplFileInfo(
         \SplFileInfo $fileInfo,
         FileConfigInterface $fileConfig,
         RecordInterface $record,

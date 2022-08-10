@@ -68,7 +68,7 @@ class ImageModificationConfig {
      * @return static
      * @throws \InvalidArgumentException
      */
-    static public function create($modificationName) {
+    public static function create($modificationName) {
         return new static($modificationName);
     }
 
@@ -317,7 +317,7 @@ class ImageModificationConfig {
             throw new \UnexpectedValueException('Image modification has no valid width and height');
         }
         if (File::exist($newFilePath)) {
-            list($w, $h) = getimagesize($newFilePath);
+            [$w, $h] = getimagesize($newFilePath);
             if (!$expectedWidth) {
                 $expectedWidth = $w;
             } else if (!$expectedHeight) {
@@ -368,7 +368,7 @@ class ImageModificationConfig {
                     $resizeHeight = $imagick->getImageHeight() * $targetWidth / $imagick->getImageWidth();
                 }
                 $imagick->resizeImage($resizeWidth, $resizeHeight, \Imagick::FILTER_LANCZOS, 0.9);
-                list($offsetX, $offsetY) = $this->calculateOffsets($imagick, $targetWidth, $targetHeight);
+                [$offsetX, $offsetY] = $this->calculateOffsets($imagick, $targetWidth, $targetHeight);
                 $imagick->cropImage($targetWidth, $targetHeight, abs($offsetX), abs($offsetY));
                 break;
             case static::CONTAIN:
@@ -385,7 +385,7 @@ class ImageModificationConfig {
                         $targetHeight,
                         $this->getBackgroundColorForImagick($newFileMimeType === static::PNG ? 'transparent' : 'FFFFFF')
                     );
-                    list($offsetX, $offsetY) = $this->calculateOffsets($resized, $targetWidth, $targetHeight);
+                    [$offsetX, $offsetY] = $this->calculateOffsets($resized, $targetWidth, $targetHeight);
                     $imagick->compositeImage($resized, \Imagick::COMPOSITE_OVER, $offsetX, $offsetY);
                     $resized->destroy();
                 } else {

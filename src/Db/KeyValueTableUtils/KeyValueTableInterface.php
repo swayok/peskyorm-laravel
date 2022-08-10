@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Db\KeyValueTableUtils;
 
 use PeskyORM\ORM\Record;
 use PeskyORM\ORM\RecordInterface;
 use PeskyORM\ORM\TableInterface;
 
-interface KeyValueTableInterface extends TableInterface {
+interface KeyValueTableInterface extends TableInterface
+{
     
     /**
      * @return string|null
@@ -20,7 +23,7 @@ interface KeyValueTableInterface extends TableInterface {
      * @param mixed $foreignKeyValue
      * @return array
      */
-    static public function makeDataForRecord(string $key, $value, $foreignKeyValue = null): array;
+    public static function makeDataForRecord(string $key, $value, $foreignKeyValue = null): array;
     
     /**
      * Convert associative array to arrays that represent DB record and are ready for saving to DB
@@ -29,21 +32,20 @@ interface KeyValueTableInterface extends TableInterface {
      * @param array $additionalConstantValues - contains constant values for all records (for example: admin id)
      * @return array
      */
-    static public function convertToDataForRecords(array $settingsAssoc, $foreignKeyValue = null, array $additionalConstantValues = []): array;
+    public static function convertToDataForRecords(array $settingsAssoc, $foreignKeyValue = null, array $additionalConstantValues = []): array;
     
     /**
      * Update existing value or create new one
      * @param array $data - must contain: key, foreign_key, value
      * @return Record
      */
-    static public function updateOrCreateRecord(array $data): RecordInterface;
+    public static function updateOrCreateRecord(array $data): RecordInterface;
     
     /**
      * Update existing values and create new
      * @param array $records
-     * @return bool
      */
-    static public function updateOrCreateRecords(array $records): bool;
+    public static function updateOrCreateRecords(array $records): void;
     
     /**
      * @param string $key
@@ -52,19 +54,19 @@ interface KeyValueTableInterface extends TableInterface {
      * @param mixed $default
      * @return mixed
      */
-    static public function getValue(string $key, $foreignKeyValue = null, $default = null);
+    public static function getValue(string $key, $foreignKeyValue = null, $default = null);
     
     /**
      * @param mixed $foreignKeyValue
      * @param bool $ignoreCache
      * @return array
      */
-    static public function getValuesForForeignKey($foreignKeyValue = null, bool $ignoreCache = false): array;
-
+    public static function getValuesForForeignKey($foreignKeyValue = null, bool $ignoreCache = false): array;
+    
     /**
      * @param mixed $foreignKeyValue
      * @return void
      */
-    static public function cleanCachedValues($foreignKeyValue = null);
-
+    public static function cleanCachedValues($foreignKeyValue = null): void;
+    
 }

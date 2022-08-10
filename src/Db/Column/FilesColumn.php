@@ -54,7 +54,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
      */
-    static public function create($name = null, $notUsed = null) {
+    public static function create($name = null, $notUsed = null) {
         return new static($name);
     }
 
@@ -220,7 +220,7 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
     /**
      * @return array
      */
-    static public function getValidationErrorsMessages() {
+    public static function getValidationErrorsMessages() {
         return static::$validationErrorsMessages ?: array_merge(static::$additionalValidationErrorsMessages, parent::getValidationErrorsMessages());
     }
 

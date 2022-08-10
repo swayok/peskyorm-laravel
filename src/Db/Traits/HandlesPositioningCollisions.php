@@ -11,7 +11,7 @@ use PeskyORMLaravel\Db\Column\RecordPositionColumn;
 use Swayok\Utils\NormalizeValue;
 
 /**
- * @psalm-require-implements RecordInterface
+ * @psalm-require-implements \PeskyORM\ORM\RecordInterface
  */
 trait HandlesPositioningCollisions
 {

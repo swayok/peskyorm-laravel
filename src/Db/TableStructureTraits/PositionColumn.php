@@ -6,6 +6,9 @@ namespace PeskyORMLaravel\Db\TableStructureTraits;
 
 use PeskyORMLaravel\Db\Column\RecordPositionColumn;
 
+/**
+ * @psalm-require-implements \PeskyORM\ORM\TableStructureInterface
+ */
 trait PositionColumn
 {
     

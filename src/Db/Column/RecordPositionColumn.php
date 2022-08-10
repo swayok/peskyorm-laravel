@@ -9,7 +9,7 @@ class RecordPositionColumn extends Column {
 
     protected $increment = 100;
 
-    static public function create($type = self::TYPE_INT, $name = null) {
+    public static function create($type = self::TYPE_INT, $name = null) {
         return parent::create($type, $name);
     }
 

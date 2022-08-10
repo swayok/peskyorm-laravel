@@ -45,7 +45,7 @@ class FileInfo {
      * @param RecordInterface $record
      * @return static
      */
-    static public function fromArray(array $fileInfo, FileConfigInterface $fileConfig, RecordInterface $record) {
+    public static function fromArray(array $fileInfo, FileConfigInterface $fileConfig, RecordInterface $record) {
         /** @var FileInfo $obj */
         $obj = new static($fileConfig, $record, array_get($fileInfo, 'suffix'));
         $obj
@@ -75,7 +75,7 @@ class FileInfo {
      * @param null|string $fileSuffix
      * @return static
      */
-    static public function fromSplFileInfo(
+    public static function fromSplFileInfo(
         \SplFileInfo $fileInfo,
         FileConfigInterface $fileConfig,
         RecordInterface $record,
@@ -103,7 +103,7 @@ class FileInfo {
      * @param null|string $fileSuffix
      * @return static
      */
-    static public function fromUploadedTempFileInfo(
+    public static function fromUploadedTempFileInfo(
         UploadedTempFileInfo $tempFileInfo,
         FileConfigInterface $fileConfig,
         RecordInterface $record,
@@ -330,7 +330,7 @@ class FileInfo {
      * @param string|\SplFileInfo|UploadedFile $file
      * @return null|string
      */
-    static public function detectMimeType($file) {
+    public static function detectMimeType($file) {
         if ($file instanceof UploadedFile) {
             return $file->getMimeType() ?: $file->getClientMimeType();
         } else if ($file instanceof \SplFileInfo) {

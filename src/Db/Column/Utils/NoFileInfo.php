@@ -6,11 +6,11 @@ use PeskyORM\ORM\RecordInterface;
 
 class NoFileInfo extends FileInfo {
 
-    static public function fromArray(array $fileInfo, FileConfigInterface $fileConfig, RecordInterface $record) {
+    public static function fromArray(array $fileInfo, FileConfigInterface $fileConfig, RecordInterface $record) {
         throw new \BadMethodCallException('You should not call this method. NoFileInfo class is designed to be dummy.');
     }
 
-    static public function fromSplFileInfo(
+    public static function fromSplFileInfo(
         \SplFileInfo $fileInfo,
         FileConfigInterface $fileConfig,
         RecordInterface $record,
@@ -19,7 +19,7 @@ class NoFileInfo extends FileInfo {
         throw new \BadMethodCallException('You should not call this method. NoFileInfo class is designed to be dummy.');
     }
 
-    static public function create() {
+    public static function create() {
         return new static();
     }
 

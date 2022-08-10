@@ -22,7 +22,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param bool $trustDataReceivedFromDb
      * @return RecordValue
      */
-    static public function valueSetter($newValue, $isFromDb, RecordValue $valueContainer, $trustDataReceivedFromDb) {
+    public static function valueSetter($newValue, $isFromDb, RecordValue $valueContainer, $trustDataReceivedFromDb) {
         if ($isFromDb || empty($newValue)) {
             return parent::valueSetter($newValue, $isFromDb, $valueContainer, $trustDataReceivedFromDb);
         }
@@ -184,7 +184,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param Column|ImagesColumn|FilesColumn $column
      * @return array
      */
-    static public function valueNormalizer($value, $isFromDb, Column $column) {
+    public static function valueNormalizer($value, $isFromDb, Column $column) {
         if ($isFromDb && !is_array($value)) {
             $value = json_decode($value, true);
         }
@@ -305,7 +305,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param Column|ImagesColumn|FilesColumn $column
      * @return array
      */
-    static public function valueValidator($value, $isFromDb, $isForCondition, Column $column) {
+    public static function valueValidator($value, $isFromDb, $isForCondition, Column $column) {
         if ($isFromDb || is_string($value)) {
             return parent::valueValidator($value, $isFromDb, $isForCondition, $column);
         }
@@ -429,7 +429,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $value
      * @return bool
      */
-    static public function isFileInfoArray(array $value) {
+    public static function isFileInfoArray(array $value) {
         return !empty($value['name']) && !empty($value['extension']);
     }
 
@@ -440,7 +440,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param array $savedData
      * @return void
      */
-    static public function valueSavingExtender(RecordValue $valueContainer, $isUpdate, array $savedData) {
+    public static function valueSavingExtender(RecordValue $valueContainer, $isUpdate, array $savedData) {
         $updates = $valueContainer->pullDataForSavingExtender();
         if (empty($updates)) {
             // do not remove! infinite recursion will happen!
@@ -619,7 +619,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param bool $deleteFiles
      * @return void
      */
-    static public function valueDeleteExtender(RecordValue $valueContainer, $deleteFiles) {
+    public static function valueDeleteExtender(RecordValue $valueContainer, $deleteFiles) {
         if ($deleteFiles) {
             /** @var FilesColumn $column */
             $column = $valueContainer->getColumn();
@@ -639,7 +639,7 @@ class FilesUploadingColumnClosures extends DefaultColumnClosures {
      * @param string $format
      * @return mixed
      */
-    static public function valueFormatter(RecordValue $valueContainer, $format) {
+    public static function valueFormatter(RecordValue $valueContainer, $format) {
         /** @var FilesColumn $column */
         $column = $valueContainer->getColumn();
         if ($column->hasFilesGroupConfiguration($format)) {

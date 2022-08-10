@@ -7,7 +7,7 @@ namespace PeskyORMLaravel\Db\Traits;
 use PeskyORM\ORM\Record;
 
 /**
- * @psalm-require-implements RecordInterface
+ * @psalm-require-implements \PeskyORM\ORM\RecordInterface
  */
 trait DbViewHelper
 {

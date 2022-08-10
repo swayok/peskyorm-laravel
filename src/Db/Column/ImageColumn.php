@@ -1,17 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Db\Column;
 
 use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
 use PeskyORMLaravel\Db\Column\Utils\ImageUploadingColumnClosures;
 
-class ImageColumn extends FileColumn {
-
+class ImageColumn extends FileColumn
+{
+    
     protected $defaultClosuresClass = ImageUploadingColumnClosures::class;
     protected $fileConfigClass = ImageConfig::class;
-
-    public function isItAnImage() {
+    
+    public function isItAnImage(): bool
+    {
         return true;
     }
-
+    
 }

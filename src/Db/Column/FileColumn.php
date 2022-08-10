@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Db\Column;
 
 use PeskyORM\ORM\Column;
@@ -9,8 +11,9 @@ use PeskyORMLaravel\Db\Column\Utils\FileUploadingColumnClosures;
 use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
 use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
 
-class FileColumn extends Column {
-
+class FileColumn extends Column
+{
+    
     /**
      * @var string
      */
@@ -27,37 +30,37 @@ class FileColumn extends Column {
      * @var ImageConfig|FileConfig|\Closure
      */
     protected $config;
-
-    const IMAGE_TYPE_IS_NOT_ALLOWED = 'invalid_image_type';
-    const FILE_TYPE_IS_NOT_ALLOWED = 'invalid_file_type';
-    const FILE_SIZE_IS_TOO_LARGE = 'file_size_is_too_large';
-    const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
-
+    
+    public const IMAGE_TYPE_IS_NOT_ALLOWED = 'invalid_image_type';
+    public const FILE_TYPE_IS_NOT_ALLOWED = 'invalid_file_type';
+    public const FILE_SIZE_IS_TOO_LARGE = 'file_size_is_too_large';
+    public const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
+    
     static protected $additionalValidationErrorsMessages = [
         self::IMAGE_TYPE_IS_NOT_ALLOWED => "Uploaded image type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_TYPE_IS_NOT_ALLOWED => "Uploaded file type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_SIZE_IS_TOO_LARGE => "Uploaded file size is too large for '%s'. Maximum file size is %s kilobytes.",
         self::FILE_IS_NOT_A_VALID_IMAGE => "Uploaded file for '%s' is corrupted or it is not a valid image.",
     ];
-
+    
     /**
      * @param null|string $name
      * @param null|string|\Closure $relativeUploadsFolderPath
      * @return static
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
+     * @noinspection PhpParameterNameChangedDuringInheritanceInspection
      */
-    public static function create($relativeUploadsFolderPath, $name = null) {
+    public static function create($relativeUploadsFolderPath, ?string $name = null)
+    {
         return new static($name, $relativeUploadsFolderPath);
     }
-
+    
     /**
      * @param string|null $name
      * @param null|string|\Closure $relativeUploadsFolderPath
-     * @throws \BadMethodCallException
      * @throws \InvalidArgumentException
      */
-    public function __construct($name, $relativeUploadsFolderPath) {
+    public function __construct(?string $name, $relativeUploadsFolderPath)
+    {
         parent::__construct($name, static::TYPE_JSONB);
         $this
             ->convertsEmptyStringToNull()
@@ -69,43 +72,34 @@ class FileColumn extends Column {
             $this->setRelativeUploadsFolderPath($relativeUploadsFolderPath);
         }
     }
-
-    /**
-     * @return bool
-     */
-    public function isItAFile() {
+    
+    public function isItAFile(): bool
+    {
         return true;
     }
-
+    
     /**
      * Path to folder is relative to public_path()
      * @param string|\Closure $folder - function (RecordInterface $record, FileConfig $fileConfig) { return 'path/to/folder'; }
-     * @return $this
+     * @return static
      */
-    public function setRelativeUploadsFolderPath($folder) {
+    public function setRelativeUploadsFolderPath($folder)
+    {
         $this->relativeUploadsFolderPath = $folder instanceof \Closure ? $folder : static::normalizeFolderPath($folder);
         return $this;
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    protected function getRelativeUploadsFolderPath(RecordInterface $record, FileConfig $fileConfig) {
+    
+    protected function getRelativeUploadsFolderPath(RecordInterface $record, FileConfig $fileConfig): string
+    {
         if ($this->relativeUploadsFolderPath instanceof \Closure) {
             return static::normalizeFolderPath(call_user_func($this->relativeUploadsFolderPath, $record, $fileConfig));
         } else {
             return $this->buildRelativeUploadsFolderPathForRecordAndFileConfig($record, $fileConfig);
         }
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig) {
+    
+    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig): string
+    {
         $table = $record::getTable();
         if ($table instanceof KeyValueTableInterface) {
             $fkName = $table->getMainForeignKeyColumnName();
@@ -116,58 +110,46 @@ class FileColumn extends Column {
         $subfolder = preg_replace('%[^a-zA-Z0-9_-]+%', '_', $subfolder);
         return $this->relativeUploadsFolderPath . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileConfig->getName();
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FileConfig $fileConfig) {
+    
+    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FileConfig $fileConfig): string
+    {
         return static::normalizeFolderPath(public_path($this->getRelativeUploadsFolderPath($record, $fileConfig)));
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig) {
+    
+    public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig): string
+    {
         return static::normalizeFolderUrl($this->getRelativeUploadsFolderPath($record, $fileConfig));
     }
-
-    /**
-     * @param string $path
-     * @return string
-     */
-    static protected function normalizeFolderPath($path) {
+    
+    protected static function normalizeFolderPath(string $path): string
+    {
         return preg_replace('%[/\\\]+%', DIRECTORY_SEPARATOR, rtrim($path, ' /\\')) . DIRECTORY_SEPARATOR;
     }
-
-    /**
-     * @param string $url
-     * @return string
-     */
-    static protected function normalizeFolderUrl($url) {
+    
+    protected static function normalizeFolderUrl(string $url): string
+    {
         return '/' . trim(preg_replace('%[\\\]+%', '/', $url), ' /') . '/';
     }
-
+    
     /**
-     * @param \Closure $configurator = function (FileConfig $fileConfig) { //modify $fileConfig }
-     * @return $this
+     * @param \Closure|null $configurator = function (FileConfig $fileConfig) { //modify $fileConfig }
+     * @return static
      */
-    public function setConfiguration(\Closure $configurator = null) {
+    public function setConfiguration(?\Closure $configurator = null)
+    {
         $this->config = $configurator;
         return $this;
     }
-
+    
     /**
      * @return FileConfig|ImageConfig
      * @throws \UnexpectedValueException
      */
-    public function getConfiguration() {
+    public function getConfiguration()
+    {
         if (!$this->hasConfiguration()) {
             throw new \UnexpectedValueException('There is no configuration for a files group');
-        } else if (!is_object($this->config) || get_class($this->config) !== $this->fileConfigClass) {
+        } elseif (!is_object($this->config) || get_class($this->config) !== $this->fileConfigClass) {
             $class = $this->fileConfigClass;
             /** @var FileConfig $fileConfig */
             $fileConfig = new $class($this->getName());
@@ -185,20 +167,15 @@ class FileColumn extends Column {
         }
         return $this->config;
     }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasConfiguration() {
+    
+    public function hasConfiguration(): bool
+    {
         return !empty($this->config);
     }
-
-    /**
-     * @return array
-     */
-    public static function getValidationErrorsMessages() {
+    
+    public static function getValidationErrorsMessages(): array
+    {
         return static::$validationErrorsMessages ?: array_merge(static::$additionalValidationErrorsMessages, parent::getValidationErrorsMessages());
     }
-
+    
 }

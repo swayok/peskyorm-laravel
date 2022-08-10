@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Db\Column;
 
 use PeskyORM\ORM\Column;
@@ -10,8 +12,9 @@ use PeskyORMLaravel\Db\Column\Utils\FilesUploadingColumnClosures;
 use PeskyORMLaravel\Db\Column\Utils\ImagesGroupConfig;
 use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
 
-class FilesColumn extends Column implements \Iterator, \ArrayAccess {
-
+class FilesColumn extends Column implements \Iterator, \ArrayAccess
+{
+    
     /**
      * @var string
      */
@@ -32,13 +35,13 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
      * @var array
      */
     protected $iterator;
-
-    const IMAGE_TYPE_IS_NOT_ALLOWED = 'invalid_image_type';
-    const FILE_TYPE_IS_NOT_ALLOWED = 'invalid_file_type';
-    const FILE_SIZE_IS_TOO_LARGE = 'file_size_is_too_large';
-    const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
-    const DATA_IS_NOT_A_VALID_UPLOAD_INFO = 'file_is_not_a_valid_upload';
-
+    
+    public const IMAGE_TYPE_IS_NOT_ALLOWED = 'invalid_image_type';
+    public const FILE_TYPE_IS_NOT_ALLOWED = 'invalid_file_type';
+    public const FILE_SIZE_IS_TOO_LARGE = 'file_size_is_too_large';
+    public const FILE_IS_NOT_A_VALID_IMAGE = 'file_is_not_a_valid_image';
+    public const DATA_IS_NOT_A_VALID_UPLOAD_INFO = 'file_is_not_a_valid_upload';
+    
     static protected $additionalValidationErrorsMessages = [
         self::IMAGE_TYPE_IS_NOT_ALLOWED => "Uploaded image type '%s' is not allowed for '%s'. Allowed file types: %s.",
         self::FILE_TYPE_IS_NOT_ALLOWED => "Uploaded file type '%s' is not allowed for '%s'. Allowed file types: %s.",
@@ -46,66 +49,56 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
         self::FILE_IS_NOT_A_VALID_IMAGE => "Uploaded file for '%s' is corrupted or it is not a valid image.",
         self::DATA_IS_NOT_A_VALID_UPLOAD_INFO => "Data received for '%s' is not a valid upload.",
     ];
-
+    
     /**
      * @param null|string $name
-     * @param null $notUsed
+     * @param string|null $notUsed
      * @return static
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
+     * @noinspection PhpParameterNameChangedDuringInheritanceInspection
      */
-    public static function create($name = null, $notUsed = null) {
+    public static function create(?string $name = null, ?string $notUsed = null)
+    {
         return new static($name);
     }
-
+    
     /**
      * @param string|null $name
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
      */
-    public function __construct($name) {
+    public function __construct(?string $name)
+    {
         parent::__construct($name, static::TYPE_JSONB);
         $this
             ->convertsEmptyStringToNull()
             ->setDefaultValue('{}');
     }
-
-    /**
-     * @return bool
-     */
-    public function isItAFile() {
+    
+    public function isItAFile(): bool
+    {
         return true;
     }
-
+    
     /**
      * Path to folder is relative to public_path()
      * @param string|\Closure $folder - function (RecordInterface $record, FilesGroupConfig $fileConfig) { return 'path/to/folder'; }
-     * @return $this
+     * @return static
      */
-    public function setRelativeUploadsFolderPath($folder) {
+    public function setRelativeUploadsFolderPath($folder)
+    {
         $this->relativeUploadsFolderPath = $folder instanceof \Closure ? $folder : static::normalizeFolderPath($folder);
         return $this;
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    protected function getRelativeUploadsFolderPath(RecordInterface $record, FileConfig $fileConfig) {
+    
+    protected function getRelativeUploadsFolderPath(RecordInterface $record, FileConfig $fileConfig): string
+    {
         if ($this->relativeUploadsFolderPath instanceof \Closure) {
             return static::normalizeFolderPath(call_user_func($this->relativeUploadsFolderPath, $record, $fileConfig));
         } else {
             return $this->buildRelativeUploadsFolderPathForRecordAndFileConfig($record, $fileConfig);
         }
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig) {
+    
+    protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig): string
+    {
         $table = $record::getTable();
         if ($table instanceof KeyValueTableInterface) {
             $fkName = $table->getMainForeignKeyColumnName();
@@ -116,57 +109,44 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
         $subfolder = preg_replace('%[^a-zA-Z0-9_-]+%', '_', $subfolder);
         return $this->relativeUploadsFolderPath . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileConfig->getName();
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FileConfig $fileConfig) {
+    
+    public function getAbsoluteFileUploadsFolder(RecordInterface $record, FileConfig $fileConfig): string
+    {
         return static::normalizeFolderPath(public_path($this->getRelativeUploadsFolderPath($record, $fileConfig)));
     }
-
-    /**
-     * @param RecordInterface $record
-     * @param FileConfig $fileConfig
-     * @return string
-     */
-    public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig) {
+    
+    public function getRelativeFileUploadsUrl(RecordInterface $record, FileConfig $fileConfig): string
+    {
         return static::normalizeFolderUrl($this->getRelativeUploadsFolderPath($record, $fileConfig));
     }
-
-    /**
-     * @param string $path
-     * @return string
-     */
-    static protected function normalizeFolderPath($path) {
+    
+    protected static function normalizeFolderPath(string $path): string
+    {
         return preg_replace('%[/\\\]+%', DIRECTORY_SEPARATOR, rtrim($path, ' /\\')) . DIRECTORY_SEPARATOR;
     }
-
-    /**
-     * @param string $url
-     * @return string
-     */
-    static protected function normalizeFolderUrl($url) {
+    
+    protected static function normalizeFolderUrl(string $url): string
+    {
         return '/' . trim(preg_replace('%[\\\]+%', '/', $url), ' /') . '/';
     }
-
+    
     /**
      * @param string $name - file field name
-     * @param \Closure $configurator = function (FilesGroupConfig $fileConfig) { //modify $fileConfig }
-     * @return $this
+     * @param \Closure|null $configurator = function (FilesGroupConfig $fileConfig) { //modify $fileConfig }
+     * @return static
      */
-    public function addFilesGroupConfiguration($name, \Closure $configurator = null) {
+    public function addFilesGroupConfiguration(string $name, ?\Closure $configurator = null)
+    {
         $this->configs[$name] = $configurator;
         $this->iterator = null;
         return $this;
     }
-
+    
     /**
      * @return FilesGroupConfig[]|ImagesGroupConfig[]
-     * @throws \UnexpectedValueException
      */
-    public function getFilesGroupsConfigurations() {
+    public function getFilesGroupsConfigurations(): array
+    {
         foreach ($this->configs as $name => $config) {
             if (!(get_class($config) === $this->fileConfigClass)) {
                 $this->getFilesGroupConfiguration($name);
@@ -174,16 +154,17 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
         }
         return $this->configs;
     }
-
+    
     /**
      * @param string $name
      * @return FilesGroupConfig|ImagesGroupConfig
      * @throws \UnexpectedValueException
      */
-    public function getFilesGroupConfiguration($name) {
+    public function getFilesGroupConfiguration(string $name)
+    {
         if (!$this->hasFilesGroupConfiguration($name)) {
             throw new \UnexpectedValueException("There is no configuration for file called '$name'");
-        } else if (!is_object($this->configs[$name]) || get_class($this->configs[$name]) !== $this->fileConfigClass) {
+        } elseif (!is_object($this->configs[$name]) || get_class($this->configs[$name]) !== $this->fileConfigClass) {
             $class = $this->fileConfigClass;
             /** @var FilesGroupConfig $fileConfig */
             $fileConfig = new $class($name);
@@ -201,150 +182,80 @@ class FilesColumn extends Column implements \Iterator, \ArrayAccess {
         }
         return $this->configs[$name];
     }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasFilesGroupConfiguration($name) {
+    
+    public function hasFilesGroupConfiguration(string $name): bool
+    {
         return array_key_exists($name, $this->configs);
     }
-
-    /**
-     * @return bool
-     */
-    public function hasFilesGroupsConfigurations() {
+    
+    public function hasFilesGroupsConfigurations(): bool
+    {
         return !empty($this->configs);
     }
-
-    /**
-     * @return array
-     */
-    public static function getValidationErrorsMessages() {
+    
+    public static function getValidationErrorsMessages(): array
+    {
         return static::$validationErrorsMessages ?: array_merge(static::$additionalValidationErrorsMessages, parent::getValidationErrorsMessages());
     }
-
-    /**
-     * @return \ArrayIterator
-     */
-    public function getIterator() {
+    
+    public function getIterator(): \ArrayIterator
+    {
         if ($this->iterator === null) {
             $this->iterator = new \ArrayIterator($this->configs);
         }
         return $this->iterator;
     }
-
-    /**
-     * Return the current element
-     * @link http://php.net/manual/en/iterator.current.php
-     * @return ImagesGroupConfig|FilesGroupConfig
-     * @throws \UnexpectedValueException
-     * @since 5.0.0
-     */
-    public function current() {
-        return $this->getFilesGroupConfiguration($this->getIterator()->key());
+    
+    public function current()
+    {
+        return $this->getFilesGroupConfiguration(
+            $this->getIterator()
+                ->key()
+        );
     }
-
-    /**
-     * Move forward to next element
-     * @link http://php.net/manual/en/iterator.next.php
-     * @return void Any returned value is ignored.
-     * @since 5.0.0
-     */
-    public function next() {
-        $this->getIterator()->next();
+    
+    public function next(): void
+    {
+        $this->getIterator()
+            ->next();
     }
-
-    /**
-     * Return the key of the current element
-     * @link http://php.net/manual/en/iterator.key.php
-     * @return mixed scalar on success, or null on failure.
-     * @since 5.0.0
-     */
-    public function key() {
-        return $this->getIterator()->key();
+    
+    public function key()
+    {
+        return $this->getIterator()
+            ->key();
     }
-
-    /**
-     * Checks if current position is valid
-     * @link http://php.net/manual/en/iterator.valid.php
-     * @return boolean The return value will be casted to boolean and then evaluated.
-     * Returns true on success or false on failure.
-     * @since 5.0.0
-     */
-    public function valid() {
-        return $this->getIterator()->valid();
+    
+    public function valid(): bool
+    {
+        return $this->getIterator()
+            ->valid();
     }
-
-    /**
-     * Rewind the Iterator to the first element
-     * @link http://php.net/manual/en/iterator.rewind.php
-     * @return void Any returned value is ignored.
-     * @since 5.0.0
-     */
-    public function rewind() {
-        $this->getIterator()->rewind();
+    
+    public function rewind(): void
+    {
+        $this->getIterator()
+            ->rewind();
     }
-
-    /**
-     * Whether a offset exists
-     * @link http://php.net/manual/en/arrayaccess.offsetexists.php
-     * @param mixed $offset <p>
-     * An offset to check for.
-     * </p>
-     * @return boolean true on success or false on failure.
-     * </p>
-     * <p>
-     * The return value will be casted to boolean if non-boolean was returned.
-     * @since 5.0.0
-     */
-    public function offsetExists($offset) {
+    
+    public function offsetExists($offset): bool
+    {
         return array_key_exists($offset, $this->configs);
     }
-
-    /**
-     * Offset to retrieve
-     * @link http://php.net/manual/en/arrayaccess.offsetget.php
-     * @param mixed $offset <p>
-     * The offset to retrieve.
-     * </p>
-     * @return FilesGroupConfig
-     * @throws \UnexpectedValueException
-     * @since 5.0.0
-     */
-    public function offsetGet($offset) {
+    
+    public function offsetGet($offset)
+    {
         return $this->getFilesGroupConfiguration($offset);
     }
-
-    /**
-     * Offset to set
-     * @link http://php.net/manual/en/arrayaccess.offsetset.php
-     * @param mixed $offset <p>
-     * The offset to assign the value to.
-     * </p>
-     * @param mixed $value <p>
-     * The value to set.
-     * </p>
-     * @return void
-     * @throws \BadMethodCallException
-     * @since 5.0.0
-     */
-    public function offsetSet($offset, $value) {
+    
+    public function offsetSet($offset, $value): void
+    {
         throw new \BadMethodCallException('You must use special setter method add*Configuration()');
     }
-
-    /**
-     * Offset to unset
-     * @link http://php.net/manual/en/arrayaccess.offsetunset.php
-     * @param mixed $offset <p>
-     * The offset to unset.
-     * </p>
-     * @return void
-     * @throws \BadMethodCallException
-     * @since 5.0.0
-     */
-    public function offsetUnset($offset) {
+    
+    public function offsetUnset($offset): void
+    {
         throw new \BadMethodCallException('Removing file configuration is forbidden');
     }
-
+    
 }

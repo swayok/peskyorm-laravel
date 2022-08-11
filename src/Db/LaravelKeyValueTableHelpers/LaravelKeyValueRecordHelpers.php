@@ -7,7 +7,6 @@ namespace PeskyORMLaravel\Db\LaravelKeyValueTableHelpers;
 use PeskyORM\ORM\KeyValueTableHelpers\KeyValueRecordHelpers;
 
 /**
- * @method static LaravelKeyValueTableInterface getTable()
  * @psalm-require-implements \PeskyORM\ORM\RecordInterface
  */
 trait LaravelKeyValueRecordHelpers
@@ -33,14 +32,13 @@ trait LaravelKeyValueRecordHelpers
     
     protected function cleanCacheOnChange(): void
     {
-        $fkName = static::getTable()
-            ->getMainForeignKeyColumnName();
+        /** @var LaravelKeyValueTableInterface $table */
+        $table = static::getTable();
+        $fkName = $table->getMainForeignKeyColumnName();
         if ($fkName === null) {
-            static::getTable()
-                ->cleanCachedValues();
+            $table->cleanCachedValues();
         } elseif ($this->hasValue($fkName)) {
-            static::getTable()
-                ->cleanCachedValues($this->getValue($fkName));
+            $table->cleanCachedValues($this->getValue($fkName));
         }
     }
     

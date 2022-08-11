@@ -10,7 +10,6 @@ use PeskyORM\ORM\Record;
 use PeskyORM\ORM\RecordInterface;
 
 /**
- * @method static LaravelKeyValueTableInterface getInstance()
  * @psalm-require-implements \PeskyORMLaravel\Db\KeyValueTableUtils\LaravelKeyValueTableInterface
  */
 trait LaravelKeyValueTableHelpers
@@ -44,7 +43,9 @@ trait LaravelKeyValueTableHelpers
     public static function updateOrCreateRecord(array $data): RecordInterface
     {
         $success = KeyValueTableHelpers::updateOrCreateRecord($data);
-        $fkName = static::getInstance()->getMainForeignKeyColumnName();
+        /** @var LaravelKeyValueTableInterface $table */
+        $table = static::getInstance();
+        $fkName = $table->getMainForeignKeyColumnName();
         static::cleanCachedValues(empty($fkName) ? null : $data[$fkName]);
         return $success;
     }
@@ -74,10 +75,12 @@ trait LaravelKeyValueTableHelpers
             if (array_key_exists($key, $cachedValues)) {
                 $recordData = [
                     static::getKeysColumnName() => $key,
-                    static::getValuesColumnName() => $cachedValues[$key]
+                    static::getValuesColumnName() => $cachedValues[$key],
                 ];
                 if ($foreignKeyValue) {
-                    $recordData[static::getInstance()->getMainForeignKeyColumnName()] = $foreignKeyValue;
+                    /** @var LaravelKeyValueTableInterface $table */
+                    $table = static::getInstance();
+                    $recordData[$table->getMainForeignKeyColumnName()] = $foreignKeyValue;
                 }
             }
         }

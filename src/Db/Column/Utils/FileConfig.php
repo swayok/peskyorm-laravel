@@ -211,7 +211,7 @@ class FileConfig extends MimeTypesHelper implements FileConfigInterface {
     protected function getFileNameBuilder() {
         if (!$this->fileNameBuilder) {
             $this->fileNameBuilder = function ($fileConfig, $fileSuffix = null) {
-                /** @var FileConfig|FilesGroupConfig $fileConfig */
+                /** @var FileConfig $fileConfig */
                 return $fileConfig->getName() . $fileSuffix;
             };
         }

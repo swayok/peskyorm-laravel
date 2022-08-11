@@ -8,20 +8,20 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class Base64UploadedFile extends UploadedFile {
 
     protected static $extToMime = [
-        'txt' => FilesGroupConfig::TXT,
-        'pdf' => FilesGroupConfig::PDF,
-        'rtf' => FilesGroupConfig::RTF,
-        'doc' => FilesGroupConfig::DOC,
-        'docx' => FilesGroupConfig::DOCX,
-        'xls' => FilesGroupConfig::XLS,
-        'xlsx' => FilesGroupConfig::XLSX,
-        'png' => FilesGroupConfig::PNG,
-        'jpg' => FilesGroupConfig::JPEG,
-        'gif' => FilesGroupConfig::GIF,
-        'svg' => FilesGroupConfig::SVG,
-        'mp4' => FilesGroupConfig::MP4_VIDEO,
-        'mp3' => FilesGroupConfig::MP4_AUDIO,
-        'csv' => FilesGroupConfig::CSV,
+        'txt' => MimeTypesHelper::TXT,
+        'pdf' => MimeTypesHelper::PDF,
+        'rtf' => MimeTypesHelper::RTF,
+        'doc' => MimeTypesHelper::DOC,
+        'docx' => MimeTypesHelper::DOCX,
+        'xls' => MimeTypesHelper::XLS,
+        'xlsx' => MimeTypesHelper::XLSX,
+        'png' => MimeTypesHelper::PNG,
+        'jpg' => MimeTypesHelper::JPEG,
+        'gif' => MimeTypesHelper::GIF,
+        'svg' => MimeTypesHelper::SVG,
+        'mp4' => MimeTypesHelper::MP4_VIDEO,
+        'mp3' => MimeTypesHelper::MP4_AUDIO,
+        'csv' => MimeTypesHelper::CSV,
     ];
 
     protected $tempFilePath;

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileInfo {
 
-    /** @var FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig */
+    /** @var FileConfig|ImageConfig */
     protected $fileConfig;
     /** @var RecordInterface */
     protected $record;
@@ -41,7 +41,7 @@ class FileInfo {
 
     /**
      * @param array $fileInfo
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
+     * @param FileConfig|ImageConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @return static
      */
@@ -70,7 +70,7 @@ class FileInfo {
 
     /**
      * @param \SplFileInfo $fileInfo
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
+     * @param FileConfig|ImageConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @param null|string $fileSuffix
      * @return static
@@ -98,7 +98,7 @@ class FileInfo {
 
     /**
      * @param UploadedTempFileInfo $tempFileInfo
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
+     * @param FileConfig|ImageConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @param null|string $fileSuffix
      * @return static
@@ -120,7 +120,7 @@ class FileInfo {
     }
 
     /**
-     * @param FileConfig|ImageConfig|FilesGroupConfig|ImagesGroupConfig|FileConfigInterface $fileConfig
+     * @param FileConfig|ImageConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @param null|string $fileSuffix
      */

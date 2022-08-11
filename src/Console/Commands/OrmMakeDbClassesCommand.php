@@ -11,7 +11,7 @@ use PeskyORM\ORM\ClassBuilder;
 use PeskyORM\ORM\Record;
 use PeskyORM\ORM\Table;
 use PeskyORM\ORM\TableStructure;
-use PeskyORMLaravel\Db\OrmDbClassesUtils;
+use PeskyORMLaravel\Db\OrmClassesUtils;
 
 class OrmMakeDbClassesCommand extends Command
 {
@@ -46,7 +46,7 @@ class OrmMakeDbClassesCommand extends Command
     
     protected function getClassBuilderClass()
     {
-        return OrmDbClassesUtils::getClassBuilderClass();
+        return OrmClassesUtils::getClassBuilderClass();
     }
     
     /**
@@ -83,7 +83,7 @@ class OrmMakeDbClassesCommand extends Command
         ) {
             return;
         }
-        $builder = OrmDbClassesUtils::getClassBuilder($tableName, $connection);
+        $builder = OrmClassesUtils::getClassBuilder($tableName, $connection);
         $builder->setDbSchemaName($schemaName);
         
         $only = $this->option('only');
@@ -112,11 +112,11 @@ class OrmMakeDbClassesCommand extends Command
     protected function preapareAndGetDataForViews(): array
     {
         $tableName = $this->argument('table_name');
-        $namespace = OrmDbClassesUtils::getNamespaceForOrmDbClassesByTableName($tableName);
+        $namespace = OrmClassesUtils::getNamespaceForOrmDbClassesByTableName($tableName);
         /** @var ClassBuilder $builderClass */
-        $builderClass = OrmDbClassesUtils::getClassBuilderClass();
+        $builderClass = OrmClassesUtils::getClassBuilderClass();
         $dataForViews = [
-            'folder' => OrmDbClassesUtils::getFolderPathForOrmDbClassesByTableName($tableName),
+            'folder' => OrmClassesUtils::getFolderPathForOrmDbClassesByTableName($tableName),
             'table' => $tableName,
             'namespace' => $namespace,
             'table_class_name' => $builderClass::makeTableClassName($tableName),

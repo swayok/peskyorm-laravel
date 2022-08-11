@@ -12,7 +12,7 @@ use PeskyORM\ORM\TableInterface;
 use PeskyORM\ORM\TableStructure;
 use PeskyORM\ORM\TableStructureInterface;
 
-abstract class OrmDbClassesUtils
+abstract class OrmClassesUtils
 {
     
     /**

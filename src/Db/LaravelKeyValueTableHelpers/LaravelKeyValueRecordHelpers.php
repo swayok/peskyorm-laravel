@@ -2,26 +2,18 @@
 
 declare(strict_types=1);
 
-namespace PeskyORMLaravel\Db\KeyValueTableUtils;
+namespace PeskyORMLaravel\Db\LaravelKeyValueTableHelpers;
+
+use PeskyORM\ORM\KeyValueTableHelpers\KeyValueRecordHelpers;
 
 /**
- * @method static KeyValueTableInterface getTable()
+ * @method static LaravelKeyValueTableInterface getTable()
  * @psalm-require-implements \PeskyORM\ORM\RecordInterface
  */
-trait KeyValueRecordHelpers
+trait LaravelKeyValueRecordHelpers
 {
     
-    /**
-     * @param string $key
-     * @param mixed $foreignKeyValue
-     * @param mixed $default
-     * @return mixed
-     */
-    public static function get(string $key, $foreignKeyValue = null, $default = null)
-    {
-        return static::getTable()
-            ->getValue($key, $foreignKeyValue, $default);
-    }
+    use KeyValueRecordHelpers;
     
     /**
      * Clean cache related to this record after saving it's data to DB
@@ -51,19 +43,5 @@ trait KeyValueRecordHelpers
                 ->cleanCachedValues($this->getValue($fkName));
         }
     }
-    
-    /**
-     * @param string $key
-     * @param array $arguments
-     * @return mixed
-     * @throws \InvalidArgumentException
-     */
-    public static function __callStatic(string $key, array $arguments)
-    {
-        $fkValue = $arguments[0] ?? null;
-        $default = $arguments[1] ?? null;
-        return static::get($key, $fkValue, $default);
-    }
-    
     
 }

@@ -9,15 +9,13 @@ class IdeHelperRecord extends \PeskyORM\ORM\Record implements \Illuminate\Contra
 {
     
     use \PeskyORMLaravel\Db\Traits\Authenticatable;
-    use \PeskyORMLaravel\Db\Traits\HandlesPositioningCollisions;
-    use \PeskyORMLaravel\Db\Traits\DbViewHelper;
-    use \PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueRecordHelpers;
+    use \PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueRecordHelpers;
 }
 
 class IdeHelperTableStructure extends \PeskyORM\ORM\TableStructure
 {
     
-    use \PeskyORMLaravel\Db\TableStructureTraits\IdColumn;
+    use \PeskyORMColumns\TableStructureTraits\IdColumn;
     
     public static function getTableName(): string
     {
@@ -25,10 +23,10 @@ class IdeHelperTableStructure extends \PeskyORM\ORM\TableStructure
     }
 }
 
-class IdeHelperTable extends \PeskyORM\ORM\Table implements \PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface
+class IdeHelperTableLaravel extends \PeskyORM\ORM\Table implements \PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueTableInterface
 {
     
-    use \PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableHelpers;
+    use \PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueTableHelpers;
     
     public function newRecord(): IdeHelperRecord
     {

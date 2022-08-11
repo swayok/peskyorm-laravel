@@ -33,7 +33,8 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "laravel/framework": ">=5.3",
-        "swayok/peskyorm": "dev-v2_1"
+        "swayok/peskyorm": "dev-v2_1",
+        "swayok/peskyorm-columns-collection": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "8.*",

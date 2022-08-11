@@ -9,7 +9,7 @@ use PeskyORM\ORM\RecordInterface;
 use PeskyORMLaravel\Db\Column\Utils\FileConfig;
 use PeskyORMLaravel\Db\Column\Utils\FileUploadingColumnClosures;
 use PeskyORMLaravel\Db\Column\Utils\ImageConfig;
-use PeskyORMLaravel\Db\KeyValueTableUtils\KeyValueTableInterface;
+use PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueTableInterface;
 
 class FileColumn extends Column
 {
@@ -101,7 +101,7 @@ class FileColumn extends Column
     protected function buildRelativeUploadsFolderPathForRecordAndFileConfig(RecordInterface $record, FileConfig $fileConfig): string
     {
         $table = $record::getTable();
-        if ($table instanceof KeyValueTableInterface) {
+        if ($table instanceof LaravelKeyValueTableInterface) {
             $fkName = $table->getMainForeignKeyColumnName();
             $subfolder = empty($fkName) ? '' : $record->getValue($fkName);
         } else {

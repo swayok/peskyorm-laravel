@@ -10,7 +10,7 @@ class ModifiedImageInfo extends FileInfo {
 
     /**
      * @param \SplFileInfo $fileInfo
-     * @param FileConfig|FilesGroupConfig|FileConfigInterface $fileConfig
+     * @param FileConfig|FileConfigInterface $fileConfig
      * @param RecordInterface $record
      * @param null|string $fileSuffix
      * @return ModifiedImageInfo

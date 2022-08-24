@@ -29,22 +29,22 @@ class OrmMakeDbClassesCommand extends Command
      */
     protected $description = 'Create classes for DB table.';
     
-    protected function getTableParentClass()
+    protected function getTableParentClass(): string
     {
         return config('peskyorm.base_table_class', Table::class);
     }
     
-    protected function getRecordParentClass()
+    protected function getRecordParentClass(): string
     {
         return config('peskyorm.base_record_class', Record::class);
     }
     
-    protected function getTableStructureParentClass()
+    protected function getTableStructureParentClass(): string
     {
         return config('peskyorm.base_table_structure_class', TableStructure::class);
     }
     
-    protected function getClassBuilderClass()
+    protected function getClassBuilderClass(): string
     {
         return OrmClassesCreationUtils::getClassBuilderClass();
     }

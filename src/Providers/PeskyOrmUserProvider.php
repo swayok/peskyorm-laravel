@@ -15,14 +15,10 @@ class PeskyOrmUserProvider implements UserProvider
     
     /**
      * The PeskyORM user object (Record).
-     *
      * @var string|RecordInterface
      */
-    protected $dbRecordClass;
-    /**
-     * @var array
-     */
-    protected $relationsToFetch = [];
+    protected string $dbRecordClass;
+    protected array $relationsToFetch = [];
     
     /**
      * @param string|RecordInterface $dbRecordClass
@@ -129,7 +125,7 @@ class PeskyOrmUserProvider implements UserProvider
      * @param string $token
      * @return void
      */
-    public function updateRememberToken(Authenticatable $user, $token)
+    public function updateRememberToken(Authenticatable $user, $token): void
     {
         /** @var RecordInterface|Authenticatable $user */
         $user->begin();
@@ -191,7 +187,7 @@ class PeskyOrmUserProvider implements UserProvider
         return $conditions;
     }
     
-    public function validateCredentials(Authenticatable $user, array $credentials)
+    public function validateCredentials(Authenticatable $user, array $credentials): bool
     {
         foreach ($this->normalizeCredentials($credentials) as $columnName => $value) {
             if (is_string($columnName) && !is_numeric($columnName)) {

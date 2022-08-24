@@ -16,7 +16,7 @@ abstract class TempFilesUploadsController extends Controller
     
     use ValidatesRequests;
     
-    protected $allowedFileMimes = [
+    protected array $allowedFileMimes = [
         'pdf',
         'doc',
         'docx',
@@ -26,7 +26,7 @@ abstract class TempFilesUploadsController extends Controller
         'png',
     ];
     
-    protected $allowedFileExtensions = [
+    protected array $allowedFileExtensions = [
         'pdf',
         'doc',
         'docx',
@@ -37,9 +37,9 @@ abstract class TempFilesUploadsController extends Controller
         'png',
     ];
     
-    protected $maxFileSizeKb = 8192;
+    protected int $maxFileSizeKb = 8192;
     
-    protected $uploadedTempFileInfoClass = LaravelUploadedTempFileInfo::class;
+    protected string $uploadedTempFileInfoClass = LaravelUploadedTempFileInfo::class;
     
     public function upload(Request $request): JsonResponse
     {

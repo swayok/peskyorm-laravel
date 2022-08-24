@@ -10,5 +10,6 @@ namespace PeskyORMLaravel\Db\Traits;
  */
 trait InjectsDbObjects
 {
+    
     use InjectsDbRecords;
 }

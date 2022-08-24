@@ -15,8 +15,7 @@ trait Authenticatable
     
     /**
      * Get the unique identifier for the user.
-     *
-     * @return mixed
+     * @return int|string
      */
     public function getAuthIdentifier()
     {
@@ -25,10 +24,8 @@ trait Authenticatable
     
     /**
      * Get the name of the unique identifier for the user.
-     *
-     * @return string
      */
-    public function getAuthIdentifierName()
+    public function getAuthIdentifierName(): string
     {
         return $this->getKeyName();
     }
@@ -45,9 +42,8 @@ trait Authenticatable
     
     /**
      * Needed to fit eloquent ORM
-     * @return string
      */
-    public function getKeyName()
+    public function getKeyName(): string
     {
         /** @var RecordInterface|Authenticatable $this */
         return $this::getTable()
@@ -56,10 +52,8 @@ trait Authenticatable
     
     /**
      * Get the password for the user.
-     *
-     * @return string
      */
-    public function getAuthPassword()
+    public function getAuthPassword(): string
     {
         /** @var RecordInterface|Authenticatable $this */
         return $this->getValue('password');
@@ -67,10 +61,8 @@ trait Authenticatable
     
     /**
      * Get the token value for the "remember me" session.
-     *
-     * @return string
      */
-    public function getRememberToken()
+    public function getRememberToken(): string
     {
         /** @var RecordInterface|Authenticatable $this */
         return $this->getValue($this->getRememberTokenName());
@@ -78,11 +70,9 @@ trait Authenticatable
     
     /**
      * Set the token value for the "remember me" session.
-     *
-     * @param string $value
-     * @return $this
+     * @return static
      */
-    public function setRememberToken($value)
+    public function setRememberToken(string $value)
     {
         /** @var RecordInterface|Authenticatable $this */
         return $this->updateValue($this->getRememberTokenName(), $value, false);
@@ -93,7 +83,7 @@ trait Authenticatable
      *
      * @return string
      */
-    public function getRememberTokenName()
+    public function getRememberTokenName(): string
     {
         return 'remember_token';
     }

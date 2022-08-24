@@ -20,6 +20,7 @@ trait LaravelKeyValueTableHelpers
     /**
      * @param mixed $foreignKeyValue
      * @return null|string
+     * @noinspection PhpUnusedParameterInspection
      */
     public static function getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue = null): ?string
     {

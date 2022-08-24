@@ -11,11 +11,12 @@ use PeskyORM\Core\DbAdapterInterface;
 use PeskyORM\Core\DbConnectionsManager;
 use PeskyORMLaravel\Console\Commands\OrmGenerateMigrationCommand;
 use PeskyORMLaravel\Console\Commands\OrmMakeDbClassesCommand;
+use PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer;
 
 class PeskyOrmServiceProvider extends ServiceProvider
 {
     
-    protected static $drivers = [
+    protected static array $drivers = [
         'mysql',
         'pgsql',
     ];
@@ -30,7 +31,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
             try {
                 foreach ($connections as $name => $connectionConfig) {
                     if (
-                        in_array(strtolower(Arr::get($connectionConfig, 'driver', '')), static::$drivers)
+                        in_array(strtolower(Arr::get($connectionConfig, 'driver', '')), static::$drivers, true)
                         && !empty($connectionConfig['password'])
                     ) {
                         $connection = DbConnectionsManager::createConnectionFromArray($name, $connectionConfig, $this->app->runningInConsole());
@@ -56,7 +57,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
     {
         $pdoWrapper = $this->app['config']->get('peskyorm.pdo_wrapper');
         if ($pdoWrapper) {
-            if ($pdoWrapper instanceof \PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer) {
+            if ($pdoWrapper instanceof PeskyOrmDebugBarPdoTracer) {
                 if (app()->offsetExists('debugbar') && app('debugbar')->isEnabled()) {
                     $debugBar = app('debugbar');
                     $timeCollector = $debugBar->hasCollector('time') ? $debugBar->getCollector('time') : null;
@@ -64,7 +65,8 @@ class PeskyOrmServiceProvider extends ServiceProvider
                     $pdoCollector->setRenderSqlWithParams(true);
                     $debugBar->addCollector($pdoCollector);
                     DbAdapter::setConnectionWrapper(function (DbAdapterInterface $adapter, \PDO $pdo) use ($debugBar) {
-                        $pdoTracer = new \PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer($pdo);
+                        /** @noinspection PhpMethodParametersCountMismatchInspection */
+                        $pdoTracer = new PeskyOrmDebugBarPdoTracer($pdo);
                         if ($debugBar->hasCollector('pdo')) {
                             $debugBar
                                 ->getCollector('pdo')
@@ -89,7 +91,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
         }
     }
     
-    public function register()
+    public function register(): void
     {
         $this->app['auth']->provider('peskyorm', function ($app, $config) {
             return new PeskyOrmUserProvider(Arr::get($config, 'model'), (array)Arr::get($config, 'relations', []));
@@ -104,7 +106,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
         $this->registerCommands();
     }
     
-    public function provides()
+    public function provides(): array
     {
         return [
             'peskyorm.connection',

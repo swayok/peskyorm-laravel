@@ -28,10 +28,7 @@ class OrmGenerateMigrationCommand extends BaseCommand
      */
     protected $description = 'Create migration based on existing table in DB';
     
-    /**
-     * @var Composer
-     */
-    protected $composer;
+    protected Composer $composer;
     
     public function __construct(Composer $composer)
     {
@@ -118,7 +115,7 @@ class OrmGenerateMigrationCommand extends BaseCommand
         return Str::studly($this->getBaseFileName($tableName, $schemaName));
     }
     
-    protected function getMigrationPath()
+    protected function getMigrationPath(): string
     {
         if (null !== ($targetPath = $this->input->getOption('path'))) {
             return $this->laravel->basePath() . '/' . $targetPath;
@@ -274,6 +271,7 @@ class OrmGenerateMigrationCommand extends BaseCommand
         }
     }
     
+    /** @noinspection PhpUnusedParameterInspection */
     protected function buildIndexes(ColumnDescription $columnDescription): array
     {
         return [];

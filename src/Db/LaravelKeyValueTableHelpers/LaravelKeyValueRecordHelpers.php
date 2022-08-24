@@ -16,7 +16,6 @@ trait LaravelKeyValueRecordHelpers
     
     /**
      * Clean cache related to this record after saving it's data to DB
-     * @param bool $isCreated
      */
     protected function cleanCacheAfterSave(bool $isCreated)
     {

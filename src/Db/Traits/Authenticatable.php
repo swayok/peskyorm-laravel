@@ -72,7 +72,7 @@ trait Authenticatable
      * Set the token value for the "remember me" session.
      * @return static
      */
-    public function setRememberToken(string $value)
+    public function setRememberToken($value)
     {
         /** @var RecordInterface|Authenticatable $this */
         return $this->updateValue($this->getRememberTokenName(), $value, false);

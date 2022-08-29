@@ -16,14 +16,16 @@ trait LaravelKeyValueRecordHelpers
     
     /**
      * Clean cache related to this record after saving it's data to DB
+     * @noinspection PhpUnused
      */
-    protected function cleanCacheAfterSave(bool $isCreated)
+    protected function cleanCacheAfterSave(bool $isCreated): void
     {
         parent::cleanCacheAfterSave($isCreated);
         $this->cleanCacheOnChange();
     }
     
-    protected function cleanCacheAfterDelete()
+    /** @noinspection PhpUnused */
+    protected function cleanCacheAfterDelete(): void
     {
         parent::cleanCacheAfterDelete();
         $this->cleanCacheOnChange();

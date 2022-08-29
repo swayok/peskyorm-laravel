@@ -110,7 +110,7 @@ trait LaravelKeyValueTableHelpers
         if (!$ignoreCache) {
             $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
             if (!empty($cacheKey)) {
-                $data = app('cache')->get($cacheKey, null);
+                $data = app('cache')->get($cacheKey);
                 if (is_array($data)) {
                     return $data;
                 }

@@ -16,14 +16,14 @@ class TestCase extends \Orchestra\Testbench\TestCase
         // additional setup
     }
     
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         return [
             PeskyOrmServiceProvider::class,
         ];
     }
     
-    protected function defineEnvironment($app)
+    protected function defineEnvironment($app): void
     {
         $dbConfigs = include $app->basePath('/vendor/swayok/peskyorm/tests/configs/global.php');
         $app['config']->set('database.default', 'pgsql');

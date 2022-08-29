@@ -23,11 +23,12 @@ class PeskyOrmDatabasePresenceVerifier implements DatabasePresenceVerifierInterf
      */
     protected string $connectionName = 'default';
     
-    public function setConnection($connection)
+    public function setConnection($connection): void
     {
         $this->connectionName = $connection;
     }
     
+    /** @noinspection PhpParameterNameChangedDuringInheritanceInspection */
     public function getCount($tableName, $column, $value, $excludeId = null, $idColumn = null, array $extra = []): int
     {
         if ($this->caseSensitiveModeEnabled || is_numeric($value)) {
@@ -45,6 +46,7 @@ class PeskyOrmDatabasePresenceVerifier implements DatabasePresenceVerifierInterf
             ->count($conditions);
     }
     
+    /** @noinspection PhpParameterNameChangedDuringInheritanceInspection */
     public function getMultiCount($tableName, $column, array $values, array $extra = []): int
     {
         $conditions = [$column => $values];

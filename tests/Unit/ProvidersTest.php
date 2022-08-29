@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PeskyORMLaravel\Tests\Unit;
 
 use Illuminate\Validation\Factory;

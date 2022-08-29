@@ -18,9 +18,9 @@ class PeskyValidationServiceProvider extends ValidationServiceProvider
         $this->addCaseInsensitiveUniquenessValidator();
     }
     
-    protected function registerPresenceVerifier()
+    protected function registerPresenceVerifier(): void
     {
-        $this->app->singleton('validation.presence', function ($app) {
+        $this->app->singleton('validation.presence', function () {
             return new PeskyOrmDatabasePresenceVerifier();
         });
     }
@@ -41,7 +41,7 @@ class PeskyValidationServiceProvider extends ValidationServiceProvider
             $validator->setPresenceVerifier(new DatabasePresenceVerifier(app('db')));
             return $validator->passes();
         });
-        $this->getValidator()->replacer('exists-eloquent', function ($message, $attribute, $rule, $parameters) {
+        $this->getValidator()->replacer('exists-eloquent', function ($message, $attribute) {
             return trans('validation.exists', ['attribute' => $attribute]);
         });
     }
@@ -54,7 +54,7 @@ class PeskyValidationServiceProvider extends ValidationServiceProvider
             $validator->setPresenceVerifier($verifier->enableCaseInsensitiveMode());
             return $validator->passes();
         });
-        $this->getValidator()->replacer('unique_ceseinsensitive', function ($message, $attribute, $rule, $parameters) {
+        $this->getValidator()->replacer('unique_ceseinsensitive', function ($message, $attribute) {
             return trans('validation.unique', ['attribute' => $attribute]);
         });
     }

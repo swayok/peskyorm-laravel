@@ -65,6 +65,7 @@ trait InjectsDbRecords
         }
     }
     
+    /** @noinspection PhpUnusedParameterInspection */
     protected function getColumnsListForDbObjectInjection(RecordInterface $object): array
     {
         return ['*']; //< '*' here will skip heavy columns. To read all columns use empty array
@@ -94,19 +95,17 @@ trait InjectsDbRecords
      */
     protected function addIsActiveAndIsDeletedConditionsForDbObjectInjection(Route $route, RecordInterface $object, array &$conditions): void
     {
-        if ($this->injectOnlyActiveObjects()) {
-            if ($object::getTable()
-                ->getTableStructure()
-                ->hasColumn('is_active')) {
-                $conditions['is_active'] = (bool)$route->parameter('is_active', true);
-            }
+        if (
+            $this->injectOnlyActiveObjects()
+            && $object::getTable()->getTableStructure()->hasColumn('is_active')
+        ) {
+            $conditions['is_active'] = (bool)$route->parameter('is_active', true);
         }
-        if ($this->injectOnlyNotSoftDeletedObjects()) {
-            if ($object::getTable()
-                ->getTableStructure()
-                ->hasColumn('is_deleted')) {
-                $conditions['is_deleted'] = (bool)$route->parameter('is_deleted', false);
-            }
+        if (
+            $this->injectOnlyNotSoftDeletedObjects()
+            && $object::getTable()->getTableStructure()->hasColumn('is_deleted')
+        ) {
+            $conditions['is_deleted'] = (bool)$route->parameter('is_deleted', false);
         }
     }
     

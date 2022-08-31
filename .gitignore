@@ -6,5 +6,6 @@
 /backup
 /none
 /components
-/_ide_helper.php
+_ide_helper.php
 composer.lock
+.phpunit.result.cache

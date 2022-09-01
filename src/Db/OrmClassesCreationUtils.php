@@ -9,7 +9,6 @@ use PeskyORM\Core\DbConnectionsManager;
 use PeskyORM\ORM\ClassBuilder;
 use PeskyORM\ORM\RecordInterface;
 use PeskyORM\ORM\TableInterface;
-use PeskyORM\ORM\TableStructure;
 use PeskyORM\ORM\TableStructureInterface;
 
 abstract class OrmClassesCreationUtils
@@ -17,6 +16,7 @@ abstract class OrmClassesCreationUtils
     
     /**
      * @return string|ClassBuilder
+     * @noinspection PhpDocSignatureInspection
      */
     public static function getClassBuilderClass(): string
     {
@@ -46,6 +46,7 @@ abstract class OrmClassesCreationUtils
     
     /**
      * @return string|RecordInterface
+     * @noinspection PhpDocSignatureInspection
      */
     public static function getRecordClassByTableNameInDb(string $tableName): string
     {
@@ -62,6 +63,7 @@ abstract class OrmClassesCreationUtils
     
     /**
      * @return string|TableInterface
+     * @noinspection PhpDocSignatureInspection
      */
     public static function getTableClassByTableNameInDb(string $tableName): string
     {
@@ -77,7 +79,8 @@ abstract class OrmClassesCreationUtils
     }
     
     /**
-     * @return string|TableStructureInterface|TableStructure
+     * @return string|TableStructureInterface
+     * @noinspection PhpDocSignatureInspection
      */
     public static function getTableStructureClassByTableNameInDb(string $tableName): string
     {

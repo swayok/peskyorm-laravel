@@ -13,15 +13,11 @@ use PeskyORM\ORM\RecordInterface;
 class PeskyOrmUserProvider implements UserProvider
 {
     
-    /**
-     * The PeskyORM user object (Record).
-     * @var string|RecordInterface
-     */
     protected string $dbRecordClass;
-    protected array $relationsToFetch = [];
+    protected array $relationsToFetch;
     
     /**
-     * @param string|RecordInterface $dbRecordClass
+     * @param string $dbRecordClass
      * @param array $relationsToFetch
      * @throws \InvalidArgumentException
      */
@@ -67,11 +63,7 @@ class PeskyOrmUserProvider implements UserProvider
         return $this->validateUser($user, null);
     }
     
-    /**
-     * @param mixed $identifier
-     * @return bool
-     */
-    protected function isValidIdentifierValue($identifier): bool
+    protected function isValidIdentifierValue(mixed $identifier): bool
     {
         if (is_string($identifier) && preg_match('%^s:\d+:%', $identifier)) {
             // it seems that after one of Laravel's minor updates they does not
@@ -100,11 +92,9 @@ class PeskyOrmUserProvider implements UserProvider
     }
     
     /**
-     * @param RecordInterface $user
-     * @param mixed $onFailReturn
      * @return mixed|RecordInterface
      */
-    protected function validateUser(RecordInterface $user, $onFailReturn = null)
+    protected function validateUser(RecordInterface $user, mixed $onFailReturn = null): mixed
     {
         if (
             $user->existsInDb()
@@ -135,11 +125,8 @@ class PeskyOrmUserProvider implements UserProvider
     
     /**
      * Retrieve a user by the given credentials.
-     *
-     * @param array $credentials
-     * @return Authenticatable|null
      */
-    public function retrieveByCredentials(array $credentials)
+    public function retrieveByCredentials(array $credentials): RecordInterface|Authenticatable|null
     {
         $conditions = [];
         
@@ -206,6 +193,7 @@ class PeskyOrmUserProvider implements UserProvider
     
     /**
      * @return RecordInterface|Authenticatable
+     * @noinspection PhpDocSignatureInspection
      */
     public function createEmptyUserRecord(): RecordInterface
     {

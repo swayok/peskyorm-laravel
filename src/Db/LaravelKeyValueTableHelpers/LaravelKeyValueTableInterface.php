@@ -9,10 +9,6 @@ use PeskyORM\ORM\KeyValueTableHelpers\KeyValueTableInterface;
 interface LaravelKeyValueTableInterface extends KeyValueTableInterface
 {
     
-    /**
-     * @param mixed $foreignKeyValue
-     * @return void
-     */
-    public static function cleanCachedValues($foreignKeyValue = null): void;
+    public static function cleanCachedValues(int|string|float|null $foreignKeyValue = null): void;
     
 }

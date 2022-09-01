@@ -18,17 +18,15 @@ trait LaravelKeyValueTableHelpers
     use KeyValueTableHelpers;
     
     /**
-     * @param mixed $foreignKeyValue
-     * @return null|string
      * @noinspection PhpUnusedParameterInspection
      */
-    public static function getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue = null): ?string
+    public static function getCacheKeyToStoreAllValuesForAForeignKey(int|float|string|null $foreignKeyValue = null): ?string
     {
         return null;
     }
     
     /**
-     * @return int - minutes
+     * In minutes
      */
     public static function getCacheDurationForAllValues(): int
     {
@@ -54,9 +52,9 @@ trait LaravelKeyValueTableHelpers
     /**
      * @param string $key
      * @param string|null $format - get formatted version of value
-     * @param mixed $foreignKeyValue - use null if there is no main foreign key column and
+     * @param int|string|float|null $foreignKeyValue - use null if there is no main foreign key column and
      *      getMainForeignKeyColumnName() method returns null
-     * @param mixed $default
+     * @param mixed|null $default
      * @param bool $ignoreEmptyValue
      *      - true: if value recorded to DB is empty - returns $default
      *      - false: returns any value from DB if it exists
@@ -66,10 +64,10 @@ trait LaravelKeyValueTableHelpers
     public static function getFormattedValue(
         string $key,
         ?string $format,
-        $foreignKeyValue = null,
-        $default = null,
+        int|string|float|null $foreignKeyValue = null,
+        mixed $default = null,
         bool $ignoreEmptyValue = false
-    ) {
+    ): mixed {
         $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
         if (!empty($cacheKey)) {
             $cachedValues = self::getValuesForForeignKey($foreignKeyValue);
@@ -97,7 +95,7 @@ trait LaravelKeyValueTableHelpers
     }
     
     /**
-     * @param mixed $foreignKeyValue
+     * @param int|string|float|null $foreignKeyValue
      * @param bool $ignoreCache
      * @param bool $ignoreEmptyValues
      *      - true: return only not empty values stored in DB
@@ -105,8 +103,11 @@ trait LaravelKeyValueTableHelpers
      * @return array
      * @throws \InvalidArgumentException
      */
-    public static function getValuesForForeignKey($foreignKeyValue = null, bool $ignoreCache = false, bool $ignoreEmptyValues = false): array
-    {
+    public static function getValuesForForeignKey(
+        int|string|float|null $foreignKeyValue = null,
+        bool $ignoreCache = false,
+        bool $ignoreEmptyValues = false
+    ): array {
         if (!$ignoreCache) {
             $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
             if (!empty($cacheKey)) {
@@ -123,7 +124,7 @@ trait LaravelKeyValueTableHelpers
         return $data;
     }
     
-    public static function cleanCachedValues($foreignKeyValue = null): void
+    public static function cleanCachedValues(int|string|float|null $foreignKeyValue = null): void
     {
         $cacheKey = static::getCacheKeyToStoreAllValuesForAForeignKey($foreignKeyValue);
         if ($cacheKey) {

@@ -85,19 +85,13 @@ class PeskyOrmDatabasePresenceVerifier implements DatabasePresenceVerifierInterf
         }
     }
     
-    /**
-     * @return static
-     */
-    public function enableCaseInsensitiveMode()
+    public function enableCaseInsensitiveMode(): static
     {
         $this->caseSensitiveModeEnabled = false;
         return $this;
     }
     
-    /**
-     * @return static
-     */
-    public function enableCaseSensitiveMode()
+    public function enableCaseSensitiveMode(): static
     {
         $this->caseSensitiveModeEnabled = true;
         return $this;

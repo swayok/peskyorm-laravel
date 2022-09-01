@@ -46,7 +46,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
                         }
                     }
                 }
-            } catch (\InvalidArgumentException $exception) {
+            } catch (\InvalidArgumentException) {
             }
         }
         $this->configurePublishes();
@@ -61,6 +61,8 @@ class PeskyOrmServiceProvider extends ServiceProvider
                 if (app()->offsetExists('debugbar') && app('debugbar')->isEnabled()) {
                     $debugBar = app('debugbar');
                     $timeCollector = $debugBar->hasCollector('time') ? $debugBar->getCollector('time') : null;
+                    /** @noinspection PhpUndefinedClassInspection */
+                    /** @noinspection PhpUndefinedNamespaceInspection */
                     $pdoCollector = new DebugBar\DataCollector\PDO\PDOCollector(null, $timeCollector);
                     $pdoCollector->setRenderSqlWithParams(true);
                     $debugBar->addCollector($pdoCollector);

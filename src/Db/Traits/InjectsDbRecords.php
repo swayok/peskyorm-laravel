@@ -6,6 +6,7 @@ namespace PeskyORMLaravel\Db\Traits;
 
 use Illuminate\Routing\Route;
 use PeskyORM\ORM\RecordInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @psalm-require-implements \Illuminate\Routing\Controller
@@ -23,9 +24,10 @@ trait InjectsDbRecords
         return true;
     }
     
-    public function callAction($method, $parameters)
+    public function callAction($method, $parameters): Response
     {
         $this->readDbObjectForInjection($parameters);
+        /** @noinspection PhpMultipleClassDeclarationsInspection */
         return parent::callAction($method, $parameters);
     }
     

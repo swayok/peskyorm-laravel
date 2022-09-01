@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace PeskyORMLaravel\Db\Traits;
 
-use PeskyORM\ORM\RecordInterface;
-
 /**
  * @psalm-require-implements \PeskyORM\ORM\RecordInterface
  * @psalm-require-implements \Illuminate\Contracts\Auth\Authenticatable
@@ -15,9 +13,8 @@ trait Authenticatable
     
     /**
      * Get the unique identifier for the user.
-     * @return int|string
      */
-    public function getAuthIdentifier()
+    public function getAuthIdentifier(): int|string|float|null
     {
         return $this->getKey();
     }
@@ -32,11 +29,9 @@ trait Authenticatable
     
     /**
      * Needed to fit eloquent ORM
-     * @return int|string
      */
-    public function getKey()
+    public function getKey(): int|string|float|null
     {
-        /** @var RecordInterface|Authenticatable $this */
         return $this->getPrimaryKeyValue();
     }
     
@@ -45,9 +40,7 @@ trait Authenticatable
      */
     public function getKeyName(): string
     {
-        /** @var RecordInterface|Authenticatable $this */
-        return $this::getTable()
-            ->getPkColumnName();
+        return $this::getTable()->getPkColumnName();
     }
     
     /**
@@ -55,7 +48,6 @@ trait Authenticatable
      */
     public function getAuthPassword(): string
     {
-        /** @var RecordInterface|Authenticatable $this */
         return $this->getValue('password');
     }
     
@@ -64,24 +56,19 @@ trait Authenticatable
      */
     public function getRememberToken(): string
     {
-        /** @var RecordInterface|Authenticatable $this */
         return $this->getValue($this->getRememberTokenName());
     }
     
     /**
      * Set the token value for the "remember me" session.
-     * @return static
      */
-    public function setRememberToken($value)
+    public function setRememberToken($value): void
     {
-        /** @var RecordInterface|Authenticatable $this */
-        return $this->updateValue($this->getRememberTokenName(), $value, false);
+        $this->updateValue($this->getRememberTokenName(), $value, false);
     }
     
     /**
      * Get the column name for the "remember me" token.
-     *
-     * @return string
      */
     public function getRememberTokenName(): string
     {

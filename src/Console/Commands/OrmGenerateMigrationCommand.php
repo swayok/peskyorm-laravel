@@ -124,7 +124,7 @@ class OrmGenerateMigrationCommand extends BaseCommand
         return parent::getMigrationPath();
     }
     
-    protected function getTemplate()
+    protected function getTemplate(): string
     {
         return file_get_contents(__DIR__ . '/stub/migration');
     }
@@ -160,6 +160,7 @@ class OrmGenerateMigrationCommand extends BaseCommand
     protected function buildColumn(ColumnDescription $columnDescription): array
     {
         if ($columnDescription->isPrimaryKey() && $columnDescription->getOrmType() === Column::TYPE_INT) {
+            /** @noinspection PhpSwitchCanBeReplacedWithMatchExpressionInspection */
             switch ($columnDescription->getDbType()) {
                 case 'tinyint':
                     return ["\$table->tinyIncrements('{$columnDescription->getName()}');"];
@@ -206,6 +207,7 @@ class OrmGenerateMigrationCommand extends BaseCommand
     {
         switch ($columnDescription->getOrmType()) {
             case Column::TYPE_INT:
+                /** @noinspection PhpSwitchCanBeReplacedWithMatchExpressionInspection */
                 switch ($columnDescription->getDbType()) {
                     case 'tinyint':
                         return "\$table->tinyInteger('{$columnDescription->getName()}')";
@@ -230,14 +232,11 @@ class OrmGenerateMigrationCommand extends BaseCommand
             case Column::TYPE_BOOL:
                 return "\$table->boolean('{$columnDescription->getName()}')";
             case Column::TYPE_TEXT:
-                switch ($columnDescription->getDbType()) {
-                    case 'mediumtext':
-                        return "\$table->mediumText('{$columnDescription->getName()}')";
-                    case 'longtext':
-                        return "\$table->longText('{$columnDescription->getName()}')";
-                    default:
-                        return "\$table->text('{$columnDescription->getName()}')";
-                }
+                return match ($columnDescription->getDbType()) {
+                    'mediumtext' => "\$table->mediumText('{$columnDescription->getName()}')",
+                    'longtext' => "\$table->longText('{$columnDescription->getName()}')",
+                    default => "\$table->text('{$columnDescription->getName()}')",
+                };
             case Column::TYPE_JSON:
                 return "\$table->json('{$columnDescription->getName()}')";
             case Column::TYPE_JSONB:

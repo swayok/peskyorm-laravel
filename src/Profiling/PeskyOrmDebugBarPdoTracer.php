@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+/** @noinspection PhpUndefinedFieldInspection */
+/** @noinspection PhpUndefinedClassInspection */
 
 declare(strict_types=1);
 
@@ -9,6 +12,7 @@ use DebugBar\DataCollector\PDO\TraceablePDO;
 class PeskyOrmDebugBarPdoTracer extends TraceablePDO
 {
     
+    /** @noinspection PhpUnused */
     protected function profileCall($method, $sql, array $args)
     {
         if (!preg_match('%^(COMMIT|BEGIN)%i', $sql)) {

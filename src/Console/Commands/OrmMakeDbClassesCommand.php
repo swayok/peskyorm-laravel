@@ -44,11 +44,6 @@ class OrmMakeDbClassesCommand extends Command
         return config('peskyorm.base_table_structure_class', TableStructure::class);
     }
     
-    protected function getClassBuilderClass(): string
-    {
-        return OrmClassesCreationUtils::getClassBuilderClass();
-    }
-    
     /**
      * @return array (
      *      NameOfTrait1::class,

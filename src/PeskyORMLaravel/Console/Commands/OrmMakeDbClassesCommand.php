@@ -110,7 +110,7 @@ class OrmMakeDbClassesCommand extends Command {
      * can be overriden in subclass
      */
     protected function getDbSchema(?string $default = null): ?string {
-        return $this->argument('schema');
+        return $this->argument('schema') ?: $default;
     }
 
     protected function preapareAndGetDataForViews() {

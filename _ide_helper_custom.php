@@ -5,49 +5,41 @@
 
 /** @noinspection PhpUnused */
 
-class IdeHelperRecord extends \PeskyORM\ORM\Record implements \Illuminate\Contracts\Auth\Authenticatable
+class IdeHelperRecord extends \PeskyORM\ORM\Record\Record implements \Illuminate\Contracts\Auth\Authenticatable
 {
-    
     use \PeskyORMLaravel\Db\Traits\Authenticatable;
-    use \PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueRecordHelpers;
 }
 
-class IdeHelperTableStructure extends \PeskyORM\ORM\TableStructure
+class IdeHelperTableStructure extends \PeskyORM\ORM\TableStructure\TableStructure
 {
-    
-    use \PeskyORMColumns\TableStructureTraits\IdColumn;
-    
-    public static function getTableName(): string
+    public function getTableName(): string
     {
         return '???';
     }
+
+    protected function registerColumns(): void
+    {
+    }
+
+    protected function registerRelations(): void
+    {
+    }
 }
 
-class IdeHelperTableLaravel extends \PeskyORM\ORM\Table implements \PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueTableInterface
-{
-    
-    use \PeskyORMLaravel\Db\LaravelKeyValueTableHelpers\LaravelKeyValueTableHelpers;
-    
-    public function newRecord(): IdeHelperRecord
+class IdeHelperTableLaravel extends \PeskyORM\ORM\Table\Table {
+    public function __construct()
     {
-        return IdeHelperRecord::newEmptyRecord();
-    }
-    
-    public function getTableStructure(): IdeHelperTableStructure
-    {
-        return IdeHelperTableStructure::getInstance();
+        parent::__construct(new IdeHelperTableStructure(), IdeHelperRecord::class);
     }
 }
 
 class IdeHelperController1 extends \Illuminate\Routing\Controller
 {
-    
     use \PeskyORMLaravel\Db\Traits\InjectsDbRecords;
 }
 
 class IdeHelperController2 extends \Illuminate\Routing\Controller
 {
-    
     use \PeskyORMLaravel\Db\Traits\InjectsDbRecordsAndValidatesOwner;
 }
 

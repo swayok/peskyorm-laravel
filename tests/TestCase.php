@@ -25,9 +25,10 @@ class TestCase extends \Orchestra\Testbench\TestCase
     
     protected function defineEnvironment($app): void
     {
-        $dbConfigs = include $app->basePath('/vendor/swayok/peskyorm/tests/configs/global.php');
-        $app['config']->set('database.default', 'pgsql');
-        $app['config']->set('database.connections.pgsql', [
+        $dbConfigs = include __DIR__ . '/../vendor/swayok/peskyorm/tests/configs/global.php';
+        $configsRepository = $app['config'];
+        $configsRepository->set('database.default', 'pgsql');
+        $configsRepository->set('database.connections.pgsql', [
             'driver' => 'pgsql',
             'host' => Arr::get($dbConfigs, 'pgsql.host', 'localhost'),
             'port' => Arr::get($dbConfigs, 'pgsql.port') ?: 5432,
@@ -40,7 +41,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
             'schema' => 'public',
             'sslmode' => 'prefer',
         ]);
-        $app['config']->set('database.connections.mysql', [
+        $configsRepository->set('database.connections.mysql', [
             'driver' => 'mysql',
             'host' => Arr::get($dbConfigs, 'mysql.host', 'localhost'),
             'port' => Arr::get($dbConfigs, 'mysql.port') ?: 5432,
@@ -53,6 +54,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
             'prefix_indexes' => true,
             'strict' => false,
         ]);
+//        $configsRepository->set('peskyorm.classes_namespace');
     }
     
     

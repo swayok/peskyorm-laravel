@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PeskyORMLaravel\Db;
 
 use Illuminate\Support\Facades\Crypt;
-use PeskyORMColumns\Column\Files\Utils\UploadedTempFileInfo;
+use PeskyORMColumns\TableColumn\Files\Utils\UploadedTempFileInfo;
 
 class LaravelUploadedTempFileInfo extends UploadedTempFileInfo
 {

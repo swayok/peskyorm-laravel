@@ -4,83 +4,56 @@ declare(strict_types=1);
 
 namespace PeskyORMLaravel\Console\Commands;
 
+use Illuminate\Config\Repository as ConfigsRepository;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use PeskyORM\Core\DbConnectionsManager;
-use PeskyORM\ORM\ClassBuilder;
-use PeskyORM\ORM\Record;
-use PeskyORM\ORM\Table;
-use PeskyORM\ORM\TableStructure;
-use PeskyORMLaravel\Db\OrmClassesCreationUtils;
+use PeskyORM\Adapter\DbAdapterInterface;
+use PeskyORM\Config\Connection\DbConnectionsFacade;
+use PeskyORM\ORM\ClassBuilder\ClassBuilder;
+use PeskyORM\ORM\Record\Record;
+use PeskyORM\ORM\Table\Table;
+use PeskyORM\ORM\TableStructure\TableColumnFactoryInterface;
+use PeskyORM\ORM\TableStructure\TableStructure;
+use PeskyORM\TableDescription\TableDescriptionFacade;
+use PeskyORM\Utils\ServiceContainer;
+use PeskyORM\Utils\StringUtils;
 
 class OrmMakeDbClassesCommand extends Command
 {
-    
-    /**
-     * @var string
-     */
-    protected $signature = 'orm:make-db-classes {table_name} {schema?} {database_classes_app_subfolder=Db}'
-    . ' {--overwrite= : 1|0|y|n|yes|no; what to do if classes already exist}'
-    . ' {--only= : table|record|structure; create only specified class}'
-    . ' {--connection= : name of connection to use}';
-    
-    /**
-     * @var string
-     */
+    protected $signature = 'orm:make-db-classes 
+            {table_name} 
+            {schema?} 
+            {--overwrite= : 1|0|y|n|yes|no; what to do if classes already exist}
+            {--only= : table|record|structure; create only specified class}
+            {--connection=default : name of connection to use}
+        ';
+
     protected $description = 'Create classes for DB table.';
-    
-    protected function getTableParentClass(): string
-    {
-        return config('peskyorm.base_table_class', Table::class);
+
+    public function __construct(
+        protected ConfigsRepository $configsRepository
+    ) {
+        parent::__construct();
     }
-    
-    protected function getRecordParentClass(): string
-    {
-        return config('peskyorm.base_record_class', Record::class);
-    }
-    
-    protected function getTableStructureParentClass(): string
-    {
-        return config('peskyorm.base_table_structure_class', TableStructure::class);
-    }
-    
-    /**
-     * @return array (
-     *      NameOfTrait1::class,
-     *      NameOfTrait2::class,
-     * )
-     */
-    protected function getTraitsForTableConfig(): array
-    {
-        return (array)config('peskyorm.table_structure_traits', []);
-    }
-    
-    public function handle(): void
+
+    public function handle(): int
     {
         $connectionName = $this->option('connection');
-        if (!empty($connectionName)) {
-            $connectionInfo = config('database.connections.' . $connectionName);
-            if (!is_array($connectionInfo)) {
-                $this->line("- There is no configuration info for connection '{$connectionName}'");
-                return;
-            }
-            $connection = DbConnectionsManager::createConnectionFromArray($connectionName, $connectionInfo);
-        } else {
-            $connection = DbConnectionsManager::getConnection('default');
-        }
+        $connection = DbConnectionsFacade::getConnection($connectionName);
         $tableName = $this->argument('table_name');
         $schemaName = $this->argument('schema')
             ?: $connection->getConnectionConfig()
                 ->getDefaultSchemaName();
         if (
             !$connection->hasTable($tableName, $schemaName)
-            && !$this->confirm("Table {$schemaName}.{$tableName} does not exist. Continue?", true)
+            && !$this->confirm(
+                "Table {$schemaName}.{$tableName} does not exist. Continue?", true
+            )
         ) {
-            return;
+            return self::INVALID;
         }
-        $builder = OrmClassesCreationUtils::getClassBuilder($tableName, $connection);
-        $builder->setDbSchemaName($schemaName);
-        
+        $builder = $this->getClassBuilder($connection, $tableName, $schemaName);
+
         $only = $this->option('only');
         $overwrite = null;
         if (in_array($this->option('overwrite'), ['1', 'yes', 'y'], true)) {
@@ -88,116 +61,167 @@ class OrmMakeDbClassesCommand extends Command
         } elseif (in_array($this->option('overwrite'), ['0', 'no', 'n'], true)) {
             $overwrite = false;
         }
-        
-        $info = $this->preapareAndGetDataForViews();
-        
+
+        $folderPath = $this->getFolderPathToTableClasses($tableName);
+        if (!File::exists($folderPath) || !File::isDirectory($folderPath)) {
+            File::makeDirectory($folderPath, 0755, true);
+        }
+
         if (!$only || $only === 'table') {
-            $this->createTableClassFile($builder, $info, $overwrite);
+            $this->createTableClassFile($builder, $folderPath, $overwrite);
         }
         if (!$only || $only === 'record') {
-            $this->createRecordClassFile($builder, $info, $overwrite);
+            $this->createRecordClassFile($builder, $folderPath, $overwrite);
         }
         if (!$only || $only === 'structure') {
-            $this->createTableStructureClassFile($builder, $info, $overwrite);
+            $this->createTableStructureClassFile($builder, $folderPath, $overwrite);
         }
-        
+
         $this->line('Done');
+        return self::SUCCESS;
     }
-    
-    protected function preapareAndGetDataForViews(): array
+
+    protected function getClassBuilderClass(): string
     {
-        $tableName = $this->argument('table_name');
-        $namespace = OrmClassesCreationUtils::getNamespaceForOrmDbClassesByTableName($tableName);
-        /** @var ClassBuilder $builderClass */
-        $builderClass = OrmClassesCreationUtils::getClassBuilderClass();
-        $dataForViews = [
-            'folder' => OrmClassesCreationUtils::getFolderPathForOrmDbClassesByTableName($tableName),
-            'table' => $tableName,
-            'namespace' => $namespace,
-            'table_class_name' => $builderClass::makeTableClassName($tableName),
-            'record_class_name' => $builderClass::makeRecordClassName($tableName),
-            'structure_class_name' => $builderClass::makeTableStructureClassName($tableName),
-        ];
-        $dataForViews['table_file_path'] = $dataForViews['folder'] . $dataForViews['table_class_name'] . '.php';
-        $dataForViews['record_file_path'] = $dataForViews['folder'] . $dataForViews['record_class_name'] . '.php';
-        $dataForViews['structure_file_path'] = $dataForViews['folder'] . $dataForViews['structure_class_name'] . '.php';
-        if (!File::exists($dataForViews['folder']) || !File::isDirectory($dataForViews['folder'])) {
-            File::makeDirectory($dataForViews['folder'], 0755, true);
-        }
-        return $dataForViews;
-    }
-    
-    protected function createTableClassFile(ClassBuilder $builder, array $info, ?bool $overwrite): void
-    {
-        $filePath = $info['table_file_path'];
-        if (File::exists($filePath)) {
-            if ($overwrite === false) {
-                $this->line('Table class creation cancelled');
-                return;
-            } elseif ($overwrite === true) {
-                File::delete($filePath);
-            } elseif ($this->confirm("Table file {$filePath} already exists. Overwrite?")) {
-                // overwrite is undefined: ask user what to do
-                File::delete($filePath);
-            } else {
-                $this->line('Table class creation cancelled');
-                return;
-            }
-        }
-        $fileContents = $builder->buildTableClass($info['namespace'], $this->getTableParentClass());
-        File::put($filePath, $fileContents);
-        File::chmod($filePath, 0664);
-        $this->line("Table class created ({$filePath})");
-    }
-    
-    protected function createRecordClassFile(ClassBuilder $builder, array $info, ?bool $overwrite): void
-    {
-        $filePath = $info['record_file_path'];
-        if (File::exists($filePath)) {
-            if ($overwrite === false) {
-                $this->line('Record class creation cancelled');
-                return;
-            } elseif ($overwrite === true) {
-                File::delete($filePath);
-            } elseif ($this->confirm("Record file {$filePath} already exists. Overwrite?")) {
-                // overwrite is undefined: ask user what to do
-                File::delete($filePath);
-            } else {
-                $this->line('Record class creation cancelled');
-                return;
-            }
-        }
-        $fileContents = $builder->buildRecordClass($info['namespace'], $this->getRecordParentClass());
-        File::put($filePath, $fileContents);
-        File::chmod($filePath, 0664);
-        $this->line("Record class created ($filePath)");
-    }
-    
-    protected function createTableStructureClassFile(ClassBuilder $builder, array $info, ?bool $overwrite): void
-    {
-        $filePath = $info['structure_file_path'];
-        if (File::exists($filePath)) {
-            if ($overwrite === false) {
-                $this->line('TableStructure class creation cancelled');
-                return;
-            } elseif ($overwrite === true) {
-                File::delete($filePath);
-            } elseif ($this->confirm("TableStructure file {$filePath} already exists. Overwrite?")) {
-                // overwrite is undefined: ask user what to do
-                File::delete($filePath);
-            } else {
-                $this->line('TableStructure class creation cancelled');
-                return;
-            }
-        }
-        $fileContents = $builder->buildStructureClass(
-            $info['namespace'],
-            $this->getTableStructureParentClass(),
-            $this->getTraitsForTableConfig()
+        return $this->configsRepository->get(
+            'peskyorm.class_builder',
+            ClassBuilder::class
         );
+    }
+
+    protected function getClassBuilder(
+        DbAdapterInterface $connection,
+        string $tableName,
+        ?string $schemaName = null
+    ): ClassBuilder {
+        /** @var ClassBuilder $class */
+        $class = $this->getClassBuilderClass();
+        return new $class(
+            TableDescriptionFacade::describeTable($connection, $tableName, $schemaName),
+            ServiceContainer::getInstance()->make(TableColumnFactoryInterface::class),
+            $this->getNamespaceForTableClasses($tableName)
+        );
+    }
+
+    protected function getRootNamespace(): string
+    {
+        $namespace = $this->configsRepository->get('peskyorm.classes_namespace', 'App\\Db');
+        return trim($namespace, ' \\');
+    }
+
+    protected function getNamespaceForTableClasses(string $tableName): string
+    {
+        return $this->getRootNamespace() . '\\' . StringUtils::toPascalCase($tableName);
+    }
+
+    protected function getFolderPathToTableClasses(string $tableName): string
+    {
+        $relativePath = preg_replace(
+            ['%^App\\\\%', '%\\\\%'],
+            ['app\\', DIRECTORY_SEPARATOR],
+            $this->getNamespaceForTableClasses($tableName)
+        );
+        return base_path($relativePath) . DIRECTORY_SEPARATOR;
+    }
+
+    protected function createTableClassFile(
+        ClassBuilder $builder,
+        string $folderPath,
+        ?bool $overwrite
+    ): void {
+        $className = $builder->getClassName(ClassBuilder::TEMPLATE_TABLE);
+        $filePath = $folderPath . $className . '.php';
+        if (File::exists($filePath)) {
+            if (
+                $overwrite === false
+                || !$this->confirm("Table file {$filePath} already exists. Overwrite?")
+            ) {
+                $this->line(
+                    "Table class creation cancelled. File {$filePath} already exists."
+                );
+                return;
+            }
+            File::delete($filePath);
+        }
+        $fileContents = $builder->buildTableClass($this->getTableParentClass());
+
         File::put($filePath, $fileContents);
         File::chmod($filePath, 0664);
-        $this->line("TableStructure class created ($filePath)");
+        $this->line("Table class created: {$filePath}");
     }
-    
+
+    protected function getTableParentClass(): string
+    {
+        return $this->configsRepository->get(
+            'peskyorm.base_table_class',
+            Table::class
+        );
+    }
+
+    protected function createRecordClassFile(
+        ClassBuilder $builder,
+        string $folderPath,
+        ?bool $overwrite
+    ): void {
+        $className = $builder->getClassName(ClassBuilder::TEMPLATE_RECORD);
+        $filePath = $folderPath . $className . '.php';
+        if (File::exists($filePath)) {
+            if (
+                $overwrite === false
+                || !$this->confirm("Record file {$filePath} already exists. Overwrite?")
+            ) {
+                $this->line(
+                    "Record class creation cancelled. File {$filePath} already exists."
+                );
+                return;
+            }
+            File::delete($filePath);
+        }
+        $fileContents = $builder->buildRecordClass($this->getRecordParentClass());
+        File::put($filePath, $fileContents);
+        File::chmod($filePath, 0664);
+        $this->line("Record class created: {$filePath}");
+    }
+
+    protected function getRecordParentClass(): string
+    {
+        return $this->configsRepository->get(
+            'peskyorm.base_record_class',
+            Record::class
+        );
+    }
+
+    protected function createTableStructureClassFile(
+        ClassBuilder $builder,
+        string $folderPath,
+        ?bool $overwrite
+    ): void {
+        $className = $builder->getClassName(ClassBuilder::TEMPLATE_TABLE_STRUCTURE);
+        $filePath = $folderPath . $className . '.php';
+        if (File::exists($filePath)) {
+            if (
+                $overwrite === false
+                || !$this->confirm("TableStructure file {$filePath} already exists. Overwrite?")
+            ) {
+                $this->line(
+                    "TableStructure class creation cancelled. File {$filePath} already exists."
+                );
+                return;
+            }
+            File::delete($filePath);
+        }
+        $fileContents = $builder->buildStructureClass($this->getTableStructureParentClass());
+        File::put($filePath, $fileContents);
+        File::chmod($filePath, 0664);
+        $this->line("TableStructure class created: {$filePath}");
+    }
+
+    protected function getTableStructureParentClass(): string
+    {
+        return $this->configsRepository->get(
+            'peskyorm.base_table_structure_class',
+            TableStructure::class
+        );
+    }
+
 }

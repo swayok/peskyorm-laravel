@@ -13,7 +13,6 @@ use PeskyORMLaravel\Db\LaravelUploadedTempFileInfo;
 
 abstract class TempFilesUploadsController extends Controller
 {
-    
     use ValidatesRequests;
     
     protected array $allowedFileMimes = [

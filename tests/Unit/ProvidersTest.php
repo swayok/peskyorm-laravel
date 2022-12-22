@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace PeskyORMLaravel\Tests\Unit;
 
 use Illuminate\Validation\Factory;
-use PeskyORM\Core\DbConnectionsManager;
-use PeskyORM\ORM\FakeRecord;
+use PeskyORM\Adapter\Mysql;
+use PeskyORM\Adapter\Postgres;
+use PeskyORM\Config\Connection\DbConnectionsFacade;
+use PeskyORM\ORM\Record\Record;
 use PeskyORMLaravel\PeskyOrmDatabasePresenceVerifier;
 use PeskyORMLaravel\Providers\PeskyOrmServiceProvider;
 use PeskyORMLaravel\Providers\PeskyOrmUserProvider;
@@ -16,37 +18,55 @@ use Swayok\Utils\ReflectionUtils;
 
 class ProvidersTest extends TestCase
 {
-    
     public function testServiceProviderDbConnections(): void
     {
         $connectionsConfigs = $this->app['config']->get('database.connections');
-        $supportedDrivers = ReflectionUtils::getObjectPropertyValue(new PeskyOrmServiceProvider($this->app), 'drivers');
-        $supportedConnectionConfigs = array_filter($connectionsConfigs, function ($config) use ($supportedDrivers) {
-            return in_array($config['driver'], $supportedDrivers, true);
-        });
-        $connections = DbConnectionsManager::getAll();
-        static::assertArrayHasKey('default', $connections);
-        static::assertCount(count($supportedConnectionConfigs) + 1, $connections);
-        static::assertEquals(array_merge(array_keys($supportedConnectionConfigs), ['default']), array_keys($connections));
-        
+        $supportedDrivers = ReflectionUtils::getObjectPropertyValue(
+            new PeskyOrmServiceProvider($this->app),
+            'drivers'
+        );
+        $supportedConnectionConfigs = array_filter(
+            $connectionsConfigs,
+            static function ($config) use ($supportedDrivers) {
+                return in_array($config['driver'], $supportedDrivers, true);
+            }
+        );
+        foreach ($supportedConnectionConfigs as $name => $config) {
+            $connection = DbConnectionsFacade::getConnection($name);
+            switch ($config['driver']) {
+                case 'pgsql':
+                    static::assertInstanceOf(Postgres::class, $connection);
+                    break;
+                case 'mysql':
+                    static::assertInstanceOf(Mysql::class, $connection);
+                    break;
+                default:
+                    static::fail('Unknown driver');
+            }
+        }
+        // default connection
         $defaultConnectionName = $this->app['config']->get('database.default');
-        static::assertArrayHasKey($defaultConnectionName, $supportedConnectionConfigs);
-        static::assertArrayHasKey($defaultConnectionName, $connections);
-        static::assertSame($connections[$defaultConnectionName], $connections['default']);
-        static::assertSame($connections[$defaultConnectionName], DbConnectionsManager::getConnection('default'));
+        $defaultConnection = DbConnectionsFacade::getConnection('default');
+        $connection = DbConnectionsFacade::getConnection($defaultConnectionName);
+        self::assertSame($connection, $defaultConnection);
     }
     
     public function testServiceProviderRegisters(): void
     {
         // validation service provider
-        static::assertTrue($this->app->providerIsLoaded(PeskyValidationServiceProvider::class));
+        static::assertTrue(
+            $this->app->providerIsLoaded(PeskyValidationServiceProvider::class)
+        );
         // user provider for auth
-        $providers = ReflectionUtils::getObjectPropertyValue($this->app['auth'], 'customProviderCreators');
+        $providers = ReflectionUtils::getObjectPropertyValue(
+            $this->app['auth'],
+            'customProviderCreators'
+        );
         static::assertArrayHasKey('peskyorm', $providers);
-        static::assertInstanceOf(PeskyOrmUserProvider::class, $providers['peskyorm']($this->app, ['model' => FakeRecord::class]));
-        // default connection
-        static::assertTrue($this->app->has('peskyorm.connection'));
-        static::assertSame($this->app->get('peskyorm.connection'), DbConnectionsManager::getConnection('default'));
+        static::assertInstanceOf(
+            PeskyOrmUserProvider::class,
+            $providers['peskyorm']($this->app, ['model' => Record::class])
+        );
         // commands
         static::assertTrue($this->app->has('command.orm.make-db-classes'));
         static::assertTrue($this->app->has('command.orm.generate-migration'));
@@ -55,7 +75,10 @@ class ProvidersTest extends TestCase
     public function testValidationServiceProviderValidators(): void
     {
         static::assertTrue($this->app->has('validation.presence'));
-        static::assertInstanceOf(PeskyOrmDatabasePresenceVerifier::class, $this->app->get('validation.presence'));
+        static::assertInstanceOf(
+            PeskyOrmDatabasePresenceVerifier::class,
+            $this->app->get('validation.presence')
+        );
         /** @var Factory $validator */
         $validator = $this->app['validator'];
         $extensions = ReflectionUtils::getObjectPropertyValue($validator, 'extensions');

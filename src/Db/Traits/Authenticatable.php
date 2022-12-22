@@ -40,7 +40,7 @@ trait Authenticatable
      */
     public function getKeyName(): string
     {
-        return $this::getTable()->getPkColumnName();
+        return $this->getTable()->getPkColumnName();
     }
     
     /**

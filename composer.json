@@ -1,7 +1,7 @@
 {
     "name": "swayok/peskyorm-laravel",
     "type": "library",
-    "description": "Service Providers and other classes to replace laravel's Eloquent ORM by PeskyORM",
+    "description": "Service Providers and other classes to replace Laravel Eloquent ORM by PeskyORM",
     "keywords": [
         "php",
         "laravel",
@@ -33,8 +33,8 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "laravel/framework": ">=5.3",
-        "swayok/peskyorm": "dev-v2_2",
-        "swayok/peskyorm-columns-collection": "dev-orm_v2_2"
+        "swayok/peskyorm": "v3.x-dev",
+        "swayok/peskyorm-columns-collection": "dev-orm_v3"
     },
     "require-dev": {
         "phpunit/phpunit": "8.*",

@@ -8,7 +8,6 @@ use Illuminate\Config\Repository as ConfigsRepository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\ServiceProvider;
 use PeskyORM\Adapter\DbAdapterInterface;
-use PeskyORM\Config\Connection\DbConnectionConfigAbstract;
 use PeskyORM\Config\Connection\DbConnectionConfigInterface;
 use PeskyORM\Config\Connection\DbConnectionsFacade;
 use PeskyORM\ORM\TableStructure\TableColumnFactory;
@@ -17,7 +16,6 @@ use PeskyORM\Utils\ArgumentValidators;
 use PeskyORM\Utils\ServiceContainer;
 use PeskyORMLaravel\Console\Commands\OrmGenerateMigrationCommand;
 use PeskyORMLaravel\Console\Commands\OrmMakeDbClassesCommand;
-use PeskyORMLaravel\OrmServiceContainerAdapter;
 use PeskyORMLaravel\Profiling\PeskyOrmDebugBarPdoTracer;
 
 class PeskyOrmServiceProvider extends ServiceProvider
@@ -178,7 +176,6 @@ class PeskyOrmServiceProvider extends ServiceProvider
 
     protected function configureServiceContainer(): void
     {
-        ServiceContainer::replaceContainer(new OrmServiceContainerAdapter($this->app));
         $configs = $this->getConfigsRepository();
         $columnFactoryClass = $configs->get('peskyorm.column_factory', TableColumnFactory::class);
         ArgumentValidators::assertClassImplementsInterface(

@@ -6,6 +6,7 @@ namespace PeskyORMLaravel\Console\Commands;
 
 use Illuminate\Config\Repository as ConfigsRepository;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\File;
 use PeskyORM\Adapter\DbAdapterInterface;
 use PeskyORM\Config\Connection\DbConnectionsFacade;
@@ -20,9 +21,9 @@ use PeskyORM\Utils\StringUtils;
 
 class OrmMakeDbClassesCommand extends Command
 {
-    protected $signature = 'orm:make-db-classes 
-            {table_name} 
-            {schema?} 
+    protected $signature = 'orm:make-db-classes
+            {table_name}
+            {schema?}
             {--overwrite= : 1|0|y|n|yes|no; what to do if classes already exist}
             {--only= : table|record|structure; create only specified class}
             {--connection=default : name of connection to use}
@@ -31,7 +32,7 @@ class OrmMakeDbClassesCommand extends Command
     protected $description = 'Create classes for DB table.';
 
     public function __construct(
-        protected ConfigsRepository $configsRepository
+        protected Application $app
     ) {
         parent::__construct();
     }
@@ -46,13 +47,11 @@ class OrmMakeDbClassesCommand extends Command
                 ->getDefaultSchemaName();
         if (
             !$connection->hasTable($tableName, $schemaName)
-            && !$this->confirm(
-                "Table {$schemaName}.{$tableName} does not exist. Continue?", true
-            )
+            && !$this->confirm("Table {$schemaName}.{$tableName} does not exist. Continue?", true)
         ) {
             return self::INVALID;
         }
-        $builder = $this->getClassBuilder($connection, $tableName, $schemaName);
+        $builder = $this->getDbClassessBuilder($connection, $tableName, $schemaName);
 
         $only = $this->option('only');
         $overwrite = null;
@@ -81,21 +80,18 @@ class OrmMakeDbClassesCommand extends Command
         return self::SUCCESS;
     }
 
-    protected function getClassBuilderClass(): string
+    protected function getConfigsRepository(): ConfigsRepository
     {
-        return $this->configsRepository->get(
-            'peskyorm.class_builder',
-            ClassBuilder::class
-        );
+        return $this->app->make('config');
     }
 
-    protected function getClassBuilder(
+    protected function getDbClassessBuilder(
         DbAdapterInterface $connection,
         string $tableName,
         ?string $schemaName = null
     ): ClassBuilder {
         /** @var ClassBuilder $class */
-        $class = $this->getClassBuilderClass();
+        $class = $this->getConfigsRepository()->get('peskyorm.class_builder', ClassBuilder::class);
         return new $class(
             TableDescriptionFacade::describeTable($connection, $tableName, $schemaName),
             ServiceContainer::getInstance()->make(TableColumnFactoryInterface::class),
@@ -105,7 +101,10 @@ class OrmMakeDbClassesCommand extends Command
 
     protected function getRootNamespace(): string
     {
-        $namespace = $this->configsRepository->get('peskyorm.classes_namespace', 'App\\Db');
+        $namespace = $this->getConfigsRepository()->get(
+            'peskyorm.classes_namespace',
+            'App\\Db'
+        );
         return trim($namespace, ' \\');
     }
 
@@ -121,7 +120,7 @@ class OrmMakeDbClassesCommand extends Command
             ['app\\', DIRECTORY_SEPARATOR],
             $this->getNamespaceForTableClasses($tableName)
         );
-        return base_path($relativePath) . DIRECTORY_SEPARATOR;
+        return $this->app->basePath($relativePath) . DIRECTORY_SEPARATOR;
     }
 
     protected function createTableClassFile(
@@ -152,7 +151,7 @@ class OrmMakeDbClassesCommand extends Command
 
     protected function getTableParentClass(): string
     {
-        return $this->configsRepository->get(
+        return $this->getConfigsRepository()->get(
             'peskyorm.base_table_class',
             Table::class
         );
@@ -185,7 +184,7 @@ class OrmMakeDbClassesCommand extends Command
 
     protected function getRecordParentClass(): string
     {
-        return $this->configsRepository->get(
+        return $this->getConfigsRepository()->get(
             'peskyorm.base_record_class',
             Record::class
         );
@@ -218,10 +217,9 @@ class OrmMakeDbClassesCommand extends Command
 
     protected function getTableStructureParentClass(): string
     {
-        return $this->configsRepository->get(
+        return $this->getConfigsRepository()->get(
             'peskyorm.base_table_structure_class',
             TableStructure::class
         );
     }
-
 }

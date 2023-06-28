@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PeskyORMLaravel\Console\Commands;
 
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Console\Migrations\BaseCommand;
 use Illuminate\Support\Composer;
 use Illuminate\Support\Str;
@@ -16,17 +17,16 @@ use PeskyORM\TableDescription\TableDescriptionFacade;
 
 class OrmGenerateMigrationCommand extends BaseCommand
 {
-
-    protected $signature = 'orm:generate-migration 
-                    {table_name} 
-                    {schema?}
-                    {--connection=default : name of connection to use}
-                    {--path= : The location where the migration file should be created.}';
+    protected $signature = 'orm:generate-migration
+        {table_name}
+        {schema?}
+        {--connection=default : name of connection to use}
+        {--path= : The location where the migration file should be created.}';
 
     protected $description = 'Create migration based on existing table in DB';
 
     public function __construct(
-        protected Composer $composer
+        protected Application $app
     ) {
         parent::__construct();
     }
@@ -46,22 +46,21 @@ class OrmGenerateMigrationCommand extends BaseCommand
         }
 
         $this->writeMigration($connection, $tableName, $schemaName);
-        $this->composer->dumpAutoloads();
+        $this->getComposer()->dumpAutoloads();
         return self::SUCCESS;
+    }
+
+    protected function getComposer(): Composer
+    {
+        return $this->app->make('composer');
     }
 
     protected function writeMigration(DbAdapterInterface $connection, $tableName, $schemaName): void
     {
         $data = $this->collectDataForTableSchema($connection, $tableName, $schemaName);
-        $className = $this->getClassName($tableName, $schemaName);
-        if (class_exists($className)) {
-            $this->error("A {$className} class already exists.");
-            return;
-        }
         $fileContents = str_replace(
-            [':class', ':table', ':columns', ':indexes', ':foreign_keys'],
+            [':table', ':columns', ':indexes', ':foreign_keys'],
             [
-                $className,
                 $tableName,
                 implode("\n            ", $data['columns']),
                 implode("\n            ", $data['indexes']),
@@ -88,11 +87,6 @@ class OrmGenerateMigrationCommand extends BaseCommand
             $name .= '_in_' . $schemaName . '_schema';
         }
         return Str::snake($name);
-    }
-
-    protected function getClassName($tableName, $schemaName): string
-    {
-        return Str::studly($this->getBaseFileName($tableName, $schemaName));
     }
 
     protected function getMigrationPath(): string
@@ -163,11 +157,11 @@ class OrmGenerateMigrationCommand extends BaseCommand
             switch ($columnDescription->getDbType()) {
                 case 'tinyint':
                     return ["\$table->tinyIncrements('{$columnDescription->getName()}');"];
-                case 'int2';
-                case 'smallint';
+                case 'int2':
+                case 'smallint':
                     return ["\$table->smallIncrements('{$columnDescription->getName()}');"];
-                case 'int8';
-                case 'bigint';
+                case 'int8':
+                case 'bigint':
                     return ["\$table->bigIncrements('{$columnDescription->getName()}');"];
                 default:
                     return ["\$table->increments('{$columnDescription->getName()}');"];
@@ -211,11 +205,11 @@ class OrmGenerateMigrationCommand extends BaseCommand
                 switch ($columnDescription->getDbType()) {
                     case 'tinyint':
                         return "\$table->tinyInteger('{$name}')";
-                    case 'int2';
-                    case 'smallint';
+                    case 'int2':
+                    case 'smallint':
                         return "\$table->smallInteger('{$name}')";
-                    case 'int8';
-                    case 'bigint';
+                    case 'int8':
+                    case 'bigint':
                         return "\$table->bigInteger('{$name}')";
                     default:
                         return "\$table->integer('{$name}')";
@@ -292,5 +286,4 @@ class OrmGenerateMigrationCommand extends BaseCommand
         }
         return [];
     }
-
 }

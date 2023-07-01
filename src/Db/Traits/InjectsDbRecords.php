@@ -53,8 +53,7 @@ trait InjectsDbRecords
                 $this->sendRecordNotFoundResponseForInjectedRecord();
             }
             $conditions = [
-                $object::getTable()
-                    ->getPkColumnName() => $id,
+                $object->getPrimaryKeyColumnName() => $id,
             ];
             $this->addConditionsForDbObjectInjection(
                 $route,
@@ -110,13 +109,13 @@ trait InjectsDbRecords
     ): void {
         if (
             $this->injectOnlyActiveObjects()
-            && $object::getTable()->getTableStructure()->hasColumn('is_active')
+            && $object->hasColumn('is_active')
         ) {
             $conditions['is_active'] = (bool)$route->parameter('is_active', true);
         }
         if (
             $this->injectOnlyNotSoftDeletedObjects()
-            && $object::getTable()->getTableStructure()->hasColumn('is_deleted')
+            && $object->hasColumn('is_deleted')
         ) {
             $conditions['is_deleted'] = (bool)$route->parameter('is_deleted', false);
         }

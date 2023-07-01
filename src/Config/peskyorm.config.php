@@ -1,4 +1,5 @@
 <?php
+
 /** @noinspection PhpFullyQualifiedNameUsageInspection */
 
 declare(strict_types=1);
@@ -49,14 +50,16 @@ return [
         'id' => \PeskyORM\ORM\TableStructure\TableColumn\Column\IdColumn::class,
         'created_at' => \PeskyORM\ORM\TableStructure\TableColumn\Column\CreatedAtColumn::class,
         'updated_at' => \PeskyORM\ORM\TableStructure\TableColumn\Column\UpdatedAtColumn::class,
-        'password' => \PeskyORM\ORM\TableStructure\TableColumn\Column\PasswordColumn::class,
+        'password' => \PeskyORMLaravel\Db\TableColumn\LaravelPasswordColumn::class,
+        'email' => \PeskyORM\ORM\TableStructure\TableColumn\Column\EmailColumn::class,
+        'ip' => \PeskyORM\ORM\TableStructure\TableColumn\Column\IpV4AddressColumn::class,
         'is_active' => \PeskyORMColumns\TableColumn\IsActiveColumn::class,
         'is_published' => \PeskyORMColumns\TableColumn\IsPublishedColumn::class,
         'is_deleted' => \PeskyORMColumns\TableColumn\IsDeletedColumn::class,
         'deleted_at' => \PeskyORMColumns\TableColumn\DeletedAtColumn::class,
         'files_metadata' => \PeskyORMColumns\TableColumn\FilesMetadataColumn::class,
         'position' => \PeskyORMColumns\TableColumn\RecordPositionColumn::class,
-        'remember_token' => \PeskyORMColumns\TableColumn\RememberToken::class,
+        'remember_token' => \PeskyORMColumns\TableColumn\RememberTokenColumn::class,
     ],
 
     /**

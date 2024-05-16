@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeskyORMLaravel\Providers;
 
 use Illuminate\Config\Repository as ConfigsRepository;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Arr;
 use Illuminate\Support\ServiceProvider;
 use PeskyORM\Adapter\DbAdapterInterface;
@@ -27,12 +28,15 @@ class PeskyOrmServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->app->make('auth')->provider('peskyorm', function ($app, $config) {
-            return new PeskyOrmUserProvider(
-                Arr::get($config, 'model'),
-                (array)Arr::get($config, 'relations', [])
-            );
-        });
+        $this->app->make('auth')->provider(
+            'peskyorm',
+            function ($app, $config) {
+                return new PeskyOrmUserProvider(
+                    Arr::get($config, 'model'),
+                    (array)Arr::get($config, 'relations', [])
+                );
+            }
+        );
 
         $this->app->register(PeskyValidationServiceProvider::class);
 
@@ -106,17 +110,16 @@ class PeskyOrmServiceProvider extends ServiceProvider
                     && $this->app->make('debugbar')->isEnabled()
                 ) {
                     $debugBar = $this->app->make('debugbar');
-                    $timeCollector = $debugBar->hasCollector('time')
-                        ? $debugBar->getCollector('time')
+                    $timeCollector = $debugBar::hasCollector('time')
+                        ? $debugBar::getCollector('time')
                         : null;
-                    /** @noinspection PhpUndefinedClassInspection */
-                    /** @noinspection PhpUndefinedNamespaceInspection */
-                    $pdoCollector = new DebugBar\DataCollector\PDO\PDOCollector(
+                    /** @noinspection PhpFullyQualifiedNameUsageInspection */
+                    $pdoCollector = new \DebugBar\DataCollector\PDO\PDOCollector(
                         null,
                         $timeCollector
                     );
                     $pdoCollector->setRenderSqlWithParams(true);
-                    $debugBar->addCollector($pdoCollector);
+                    $debugBar::addCollector($pdoCollector);
                     $wrapperClosure = $this->getConnectionWrapperClosureForDebugBar(
                         $debugBar
                     );
@@ -139,7 +142,6 @@ class PeskyOrmServiceProvider extends ServiceProvider
     protected function getConnectionWrapperClosureForDebugBar($debugBar): \Closure
     {
         return static function (DbAdapterInterface $adapter, \PDO $pdo) use ($debugBar) {
-            /** @noinspection PhpMethodParametersCountMismatchInspection */
             $pdoTracer = new PeskyOrmDebugBarPdoTracer($pdo);
             if ($debugBar->hasCollector('pdo')) {
                 $debugBar
@@ -170,7 +172,7 @@ class PeskyOrmServiceProvider extends ServiceProvider
     protected function configurePublishes(): void
     {
         $this->publishes([
-            $this->getConfigFilePath() => config_path('peskyorm.php'),
+                $this->getConfigFilePath() => config_path('peskyorm.php'),
         ], 'config');
     }
 
@@ -197,20 +199,27 @@ class PeskyOrmServiceProvider extends ServiceProvider
                     $factory->mapNameToColumnClass($name, $columnClass);
                 }
                 return $factory;
-            }, true
+            },
+            true
         );
     }
 
     protected function registerCommands(): void
     {
-        $this->app->singleton('command.orm.make-db-classes', function () {
-            return new OrmMakeDbClassesCommand($this->app->make('config'));
-        });
+        $this->app->singleton(
+            'command.orm.make-db-classes',
+            function (Application $app) {
+                return new OrmMakeDbClassesCommand($app);
+            }
+        );
         $this->commands('command.orm.make-db-classes');
 
-        $this->app->singleton('command.orm.generate-migration', function () {
-            return new OrmGenerateMigrationCommand($this->app->make('composer'));
-        });
+        $this->app->singleton(
+            'command.orm.generate-migration',
+            function (Application $app) {
+                return new OrmGenerateMigrationCommand($app);
+            }
+        );
         $this->commands('command.orm.generate-migration');
     }
 }

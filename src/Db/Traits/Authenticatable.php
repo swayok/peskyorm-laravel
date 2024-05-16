@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace PeskyORMLaravel\Db\Traits;
 
 /**
- * @psalm-require-implements \PeskyORM\ORM\RecordInterface
+ * @psalm-require-implements \PeskyORM\ORM\Record\RecordInterface
  * @psalm-require-implements \Illuminate\Contracts\Auth\Authenticatable
  */
 trait Authenticatable
 {
-    
+
     /**
      * Get the unique identifier for the user.
      */
@@ -18,7 +18,7 @@ trait Authenticatable
     {
         return $this->getKey();
     }
-    
+
     /**
      * Get the name of the unique identifier for the user.
      */
@@ -26,7 +26,7 @@ trait Authenticatable
     {
         return $this->getKeyName();
     }
-    
+
     /**
      * Needed to fit eloquent ORM
      */
@@ -34,7 +34,7 @@ trait Authenticatable
     {
         return $this->getPrimaryKeyValue();
     }
-    
+
     /**
      * Needed to fit eloquent ORM
      */
@@ -42,7 +42,7 @@ trait Authenticatable
     {
         return $this->getTable()->getPkColumnName();
     }
-    
+
     /**
      * Get the password for the user.
      */
@@ -50,7 +50,7 @@ trait Authenticatable
     {
         return $this->getValue('password');
     }
-    
+
     /**
      * Get the token value for the "remember me" session.
      */
@@ -58,7 +58,7 @@ trait Authenticatable
     {
         return $this->getValue($this->getRememberTokenName());
     }
-    
+
     /**
      * Set the token value for the "remember me" session.
      */
@@ -66,7 +66,7 @@ trait Authenticatable
     {
         $this->updateValue($this->getRememberTokenName(), $value, false);
     }
-    
+
     /**
      * Get the column name for the "remember me" token.
      */

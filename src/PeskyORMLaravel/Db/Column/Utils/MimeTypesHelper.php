@@ -16,6 +16,8 @@ abstract class MimeTypesHelper {
     const CSV = 'text/csv';
     const PNG = 'image/png';
     const JPEG = 'image/jpeg';
+    const HEIC = 'image/heic';
+    const WEBP = 'image/webp';
     const GIF = 'image/gif';
     const SVG = 'image/svg+xml';
     const ZIP = 'application/zip';
@@ -41,6 +43,8 @@ abstract class MimeTypesHelper {
         self::PPTX => 'pptx',
         self::PNG => 'png',
         self::JPEG => 'jpg',
+        self::HEIC => 'heic',
+        self::WEBP => 'webp',
         self::GIF => 'gif',
         self::SVG => 'svg',
         self::MP4_VIDEO => 'mp4',
@@ -111,6 +115,8 @@ abstract class MimeTypesHelper {
         self::PPTX => self::TYPE_OFFICE,
         self::PNG => self::TYPE_IMAGE,
         self::JPEG => self::TYPE_IMAGE,
+        self::HEIC => self::TYPE_IMAGE,
+        self::WEBP => self::TYPE_IMAGE,
         self::GIF => self::TYPE_IMAGE,
         self::SVG => self::TYPE_IMAGE,
         self::MP4_VIDEO => self::TYPE_VIDEO,
